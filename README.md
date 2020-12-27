@@ -2,6 +2,7 @@
 GUI widgets implemented in pygame module
 
 Currently implemented:
+
 Checkbox,
 
 Radio button,
