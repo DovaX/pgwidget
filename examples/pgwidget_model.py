@@ -31,6 +31,11 @@ def click_table(pos):
         table.is_clicked(pos)
         table.which_cell_is_clicked(pos)
         table.highlight_selected(pos)
+
+def click_combobox(pos):
+    for i, combobox in enumerate(comboboxes.elements):
+        if combobox.is_point_in_rectangle(pos):
+            combobox.roll()
                             
         
         
@@ -81,9 +86,13 @@ checkboxes=pgw.PgWidget(click_checkbox)
 checkbox1=pgw.Checkbox([1000,100],"blabla")
 checkboxes.elements.append(checkbox1)
 
+comboboxes = pgw.PgWidget(click_combobox)
+combobox = pgw.ComboBox([10, 150], [63, 19], ['klingons', 'humans', 'vulcans'])
+comboboxes.elements.append(combobox)
+
 rects=[]#[DraggableRect([50,50],[30,30],(200,200,200)),DraggableRect([150,100],[30,30],(200,200,200))]
 
-pgwidgets=[buttonimages,textareas,radiobuttons,tables,buttons,checkboxes]
+pgwidgets=[buttonimages,textareas,radiobuttons,tables,buttons,checkboxes, comboboxes]
 
 
 """ END OF CUSTOM PART """

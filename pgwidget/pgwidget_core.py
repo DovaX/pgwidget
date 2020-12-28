@@ -452,6 +452,39 @@ class Button(DraggableRect):
         self.function()
 
 
+class ComboBox(DraggableRect):
+    def __init__(self, pos, size, values, text=None, border_color=(0,0,0)):
+        super().__init__(pos, size, color, draggable=False)
+        self.pos = pos
+        self.size = size
+        self.values = values
+        self.text = text
+        self.border_color = border_color
+        self._labels = self._getLabels()
+        self._is_rolled = False
+
+    def roll(self):
+        if not self._is_rolled:
+            self._is_rolled = not self._is_rolled
+            self.dy = self.size[1] * (len(self.values) + 1)
+            self.draw()
+            for label in self._labels:
+                label.draw()
+        else:
+            self._is_rolled = not self._is_rolled
+            self.x = self.pos[0]
+            self.y = self.pos[1]
+            self.dx = self.size[0]
+            self.dy = self.size[1]
+            self.draw()
+
+    def _getLabels(self):
+        tmp = []
+        for i in range(len(self.values)):
+            tmp.append(Label([self.x + 2, self.y * (i + 2) + 4], self.values[i], (0,0,0), fontsize=self.size[1] - 2, max_text_length=self.size[0]-1))
+        return (tmp)
+
+
 class PgWidget:
     def __init__(self,click_element_function=lambda *args:None,drawable=True): #lambda ~ do nothing function
         self.drawable=drawable
