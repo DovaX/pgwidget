@@ -35,7 +35,7 @@ def click_table(pos):
 def click_combobox(pos):
     for i, combobox in enumerate(comboboxes.elements):
         if combobox.is_point_in_rectangle(pos):
-            combobox.roll()
+            combobox.choose(pos)
                             
         
         

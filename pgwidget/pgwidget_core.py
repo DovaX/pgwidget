@@ -485,7 +485,20 @@ class ComboBox(DraggableRect):
             self.y = self.pos[1]
             self.dx = self.size[0]
             self.dy = self.size[1]
-            self.draw()
+
+    def choose(self, pos):
+        if self._is_rolled and self.is_point_in_rectangle(pos):
+            # is in combobox for x coordination
+            if self.x < pos[0] and pos[0] < self.x + self.size[0]:
+                lenght = pos[1] - self.y
+                idx = abs(lenght // self.size[1])
+                if idx == 0:
+                    self.roll()
+                else:
+                    self.text.label.text = self.values[idx - 1]
+                    self.roll()
+        elif self.is_point_in_rectangle(pos):
+            self.roll()
 
     def _getLabels(self):
         tmp = []
