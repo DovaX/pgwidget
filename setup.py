@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pgwidget", # Replace with your own username
-    version="0.1.8",
-    author="Dominik Vach",
+    version="0.1.10",
+    author="DovaX",
     author_email="dovax.ai@gmail.com",
     description="Widgets for pygame",
     long_description=long_description,

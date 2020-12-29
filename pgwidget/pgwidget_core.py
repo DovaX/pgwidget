@@ -34,24 +34,29 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 """TKINTER END PART"""
 
 
-bg_color=(150,150,150) #tuple
-
-screen = pygame.display.set_mode([1366,768])
-        
-pygame.init()
-pygame.display.set_caption("Drag and drop")
-#clock=pygame.time.Clock()
-screen.fill(bg_color)
-
-try:
-    window_icon = pygame.image.load('icon.png')
-except:
-    window_icon = pygame.image.load('img//icon.png')
+def initialize_pg():
+    global bg_color
+    global color
     
-pygame.display.set_icon(window_icon)
+    bg_color=(150,150,150) #tuple
+    
+    screen = pygame.display.set_mode([1366,768])
+            
+    pygame.init()
+    pygame.display.set_caption("Drag and drop")
+    #clock=pygame.time.Clock()
+    screen.fill(bg_color)
+    try:
+        window_icon = pygame.image.load('icon.png')
+        pygame.display.set_icon(window_icon)
+    except FileNotFoundError:
+        print("Warning: Icon (icon.png) not found, skipped")
+        pass
+    color=(200,200,200)
+    return(screen)
 
-color=(100,100,100)
 
+screen=initialize_pg()
 
 """TKINTER PART"""
 
@@ -450,6 +455,7 @@ class Button(DraggableRect):
     
     def run_function(self):
         self.function()
+
 
 
 class ComboBox(DraggableRect):

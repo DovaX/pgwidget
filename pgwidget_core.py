@@ -34,19 +34,29 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 """TKINTER END PART"""
 
 
-bg_color=(150,150,150) #tuple
+def initialize_pg():
+    global bg_color
+    global color
+    
+    bg_color=(150,150,150) #tuple
+    
+    screen = pygame.display.set_mode([1366,768])
+            
+    pygame.init()
+    pygame.display.set_caption("Drag and drop")
+    #clock=pygame.time.Clock()
+    screen.fill(bg_color)
+    try:
+        window_icon = pygame.image.load('icon.png')
+        pygame.display.set_icon(window_icon)
+    except FileNotFoundError:
+        print("Warning: Icon (icon.png) not found, skipped")
+        pass
+    color=(200,200,200)
+    return(screen)
 
-screen = pygame.display.set_mode([1366,768])
-        
-pygame.init()
-pygame.display.set_caption("Drag and drop")
-#clock=pygame.time.Clock()
-screen.fill(bg_color)
-window_icon = pygame.image.load('icon.png')
-pygame.display.set_icon(window_icon)
 
-color=(100,100,100)
-
+screen=initialize_pg()
 
 """TKINTER PART"""
 
@@ -426,6 +436,40 @@ class Button(DraggableRect):
     
     def run_function(self):
         self.function()
+
+
+
+class ComboBox(DraggableRect):
+    def __init__(self, pos, size, values, text=None, border_color=(0,0,0)):
+        super().__init__(pos, size, color, draggable=False)
+        self.pos = pos
+        self.size = size
+        self.values = values
+        self.text = text
+        self.border_color = border_color
+        self._labels = self._getLabels()
+        self._is_rolled = False
+
+    def roll(self):
+        if not self._is_rolled:
+            self._is_rolled = not self._is_rolled
+            self.dy = self.size[1] * (len(self.values) + 1)
+            self.draw()
+            for label in self._labels:
+                label.draw()
+        else:
+            self._is_rolled = not self._is_rolled
+            self.x = self.pos[0]
+            self.y = self.pos[1]
+            self.dx = self.size[0]
+            self.dy = self.size[1]
+            self.draw()
+
+    def _getLabels(self):
+        tmp = []
+        for i in range(len(self.values)):
+            tmp.append(Label([self.x + 2, self.y * (i + 2) + 4], self.values[i], (0,0,0), fontsize=self.size[1] - 2, max_text_length=self.size[0]-1))
+        return (tmp)
 
 
 class PgWidget:
