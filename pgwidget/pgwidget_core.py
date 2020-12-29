@@ -460,16 +460,25 @@ class ComboBox(DraggableRect):
         self.values = values
         self.text = text
         self.border_color = border_color
-        self._labels = self._getLabels()
+        self._labels = []
         self._is_rolled = False
+        if text:
+            self.text = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
+            self.text.label.text = text
+
+    def draw(self):
+        if hasattr(self, "text"):
+            self.text.draw()
+        if self._is_rolled:
+            for label, text in zip(self._labels, self.values):
+                label.label.text = text
+                label.draw()
 
     def roll(self):
         if not self._is_rolled:
             self._is_rolled = not self._is_rolled
+            self._labels = self._getLabels()
             self.dy = self.size[1] * (len(self.values) + 1)
-            self.draw()
-            for label in self._labels:
-                label.draw()
         else:
             self._is_rolled = not self._is_rolled
             self.x = self.pos[0]
@@ -481,7 +490,7 @@ class ComboBox(DraggableRect):
     def _getLabels(self):
         tmp = []
         for i in range(len(self.values)):
-            tmp.append(Label([self.x + 2, self.y * (i + 2) + 4], self.values[i], (0,0,0), fontsize=self.size[1] - 2, max_text_length=self.size[0]-1))
+            tmp.append(Cell([self.x, self.pos[1] + self.size[1] * (i + 1)], self.size, (212,212,212), coor=[0, i + 1]))
         return (tmp)
 
 
