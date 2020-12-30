@@ -35,7 +35,7 @@ def click_table(pos):
 def click_combobox(pos):
     for i, combobox in enumerate(comboboxes.elements):
         if combobox.is_point_in_rectangle(pos):
-            combobox.roll()
+            combobox.choose(pos)
                             
         
         
@@ -87,7 +87,7 @@ checkbox1=pgw.Checkbox([1000,100],"blabla")
 checkboxes.elements.append(checkbox1)
 
 comboboxes = pgw.PgWidget(click_combobox)
-combobox = pgw.ComboBox([10, 150], [63, 19], ['klingons', 'humans', 'vulcans'])
+combobox = pgw.ComboBox([10, 150], [70, 19], ['klingons', 'humans', 'vulcans'], text='federation')
 comboboxes.elements.append(combobox)
 
 rects=[]#[DraggableRect([50,50],[30,30],(200,200,200)),DraggableRect([150,100],[30,30],(200,200,200))]
