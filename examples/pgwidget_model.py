@@ -59,6 +59,7 @@ buttonimage1=ButtonImage([100,280],[50,50],img1,function=run_script_from_file)
 buttonimages.elements.append(buttonimage1)
 """
 
+lorem_ipsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
 
 
 buttons=pgw.PgWidget()
@@ -66,7 +67,7 @@ button1=pgw.Button([800,100],[80,20],"Submit")
 buttons.elements.append(button1)
 
 textareas=pgw.PgWidget()
-textarea1=pgw.TextArea([500,50],[200,120],"ahoj")
+textarea1=pgw.TextArea([500,50],[200,120], lorem_ipsum)
 textareas.elements.append(textarea1)
 
 

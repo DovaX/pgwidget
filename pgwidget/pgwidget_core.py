@@ -427,13 +427,50 @@ class TextArea(DraggableRect):
         self.label=Label([pos[0]+2,pos[1]+4],self.text,(0,0,0),font="Calibri",fontsize=15,max_text_length=size[0]-1)
         self.border_color=border_color
         self.color=color
+        self.fit2label()
+
+    def blit_text(self, surface, text, color=pygame.Color('black')):
+        words = [word.split(' ') for word in self.label.text.splitlines()]
+        space = self.label.myfont.size(' ')[0]
+        max_width, max_height = self.size
+        x, y = self.pos
+        for line in words:
+            for word in line:
+                word_surface = self.label.myfont.render(word, 0, color)
+                word_width, word_height = word_surface.get_size()
+                if x + word_width >= max_width + self.pos[0]:
+                    x = self.pos[0]
+                    y += word_height
+                surface.blit(word_surface, (x, y))
+                x += word_width + space
+            x = self.pos[0]
+            y += word_height
+            if y >= self.pos[1] + max_height:
+                break
         
     def draw(self):
         super().draw()
-        pygame.draw.rect(screen,self.border_color,[self.x,self.y,self.dx,self.dy],1)  
-        self.label.draw()  
-        
-    
+        pygame.draw.rect(screen,self.border_color,[self.x,self.y,self.dx,self.dy],1)
+        self.label.draw = self.blit_text
+        self.label.draw(screen, self.label.text)
+
+    def fit2label(self):
+        words = self.text.split()
+        final_text = ""
+        line = ""
+        for word in words:
+            if line:
+                if self.label.myfont.size(line + " " + word)[0] > self.size[0] + 3:
+                    final_text += line + "\n"
+                    line = ""
+                else:
+                    line += " " + word
+            # empty line
+            else:
+                line += word
+        if line:
+            final_text += line + "\n"
+        self.label.text = final_text
 
 
 class Button(DraggableRect):
