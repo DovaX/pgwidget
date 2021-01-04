@@ -505,47 +505,52 @@ class ComboBox(DraggableRect):
         self._labels = []
         self._is_rolled = False
         if text:
-            self.text = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
-            self.text.label.text = text
+            self.cell = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
+            self.cell.label.text = text
+            self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
 
     def draw(self):
         if hasattr(self, "text"):
-            self.text.draw()
+            pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
+            self.cell.draw()         
+            pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,2)
+            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],3)
+            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2],3)
+            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+            
         if self._is_rolled:
-            for label, text in zip(self._labels, self.values):
-                label.label.text = text
+            for label, value in zip(self._labels, self.values):
+                label.label.text = value
                 label.draw()
+                
 
     def roll(self):
         if not self._is_rolled:
             self._is_rolled = not self._is_rolled
             self._labels = self._getLabels()
-            self.dy = self.size[1] * (len(self.values) + 1)
+            self._dy = self.size[1] * (len(self.values) + 1)        
         else:
             self._is_rolled = not self._is_rolled
-            self.x = self.pos[0]
-            self.y = self.pos[1]
-            self.dx = self.size[0]
-            self.dy = self.size[1]
-
+    
+    
     def choose(self, pos):
-        if self._is_rolled and self.is_point_in_rectangle(pos):
-            # is in combobox for x coordination
-            if self.x < pos[0] and pos[0] < self.x + self.size[0]:
-                lenght = pos[1] - self.y
-                idx = abs(lenght // self.size[1])
-                if idx == 0:
-                    self.roll()
-                else:
-                    self.text.label.text = self.values[idx - 1]
-                    self.roll()
+        if self._is_rolled:
+            length = pos[1] - self.pos[1]
+            idx = abs(length // self.size[1])
+            print(idx)
+            if idx == 0:
+                self.roll()
+            else:
+                self.cell.label.text = self.values[idx - 1]
+                self.roll()
         elif self.is_point_in_rectangle(pos):
             self.roll()
+    
 
     def _getLabels(self):
         tmp = []
         for i in range(len(self.values)):
-            tmp.append(Cell([self.x, self.pos[1] + self.size[1] * (i + 1)], self.size, (212,212,212), coor=[0, i + 1]))
+            tmp.append(Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, (212,212,212), coor=[0, i + 1]))
         return (tmp)
 
 
