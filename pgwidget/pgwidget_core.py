@@ -480,17 +480,23 @@ class Button(DraggableRect):
         self.border_color=border_color
         self.color=color
         self.text=text
-        self.label=Label([pos[0]+2,pos[1]+4],self.text,(0,0,0),font="Calibri",fontsize=15,max_text_length=size[0]-1)
+        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
         self.function=function
-        
+        self.is_clicked=False
         
     def draw(self):
-        super().draw()
-        pygame.draw.rect(screen,self.border_color,[self.x,self.y,self.dx,self.dy],1)  
+        if self.is_clicked:
+            pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
+        else:
+            super().draw()
+        pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
         self.label.draw() 
     
     def run_function(self):
         self.function()
+        
+
+    
 
 
 
@@ -572,7 +578,7 @@ def main_program_loop(pgwidgets,table1):
     new_select_possible=True
     direction_list=[0,0,0,0]
     selected=None
-    
+
     while not done:  
         try:   
             for event in pygame.event.get():
@@ -581,6 +587,7 @@ def main_program_loop(pgwidgets,table1):
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if new_select_possible: #Because of popping from the list
                         pos = pygame.mouse.get_pos()
+                        
                         
                         """
                         for i,rect in enumerate(rects):
@@ -591,9 +598,36 @@ def main_program_loop(pgwidgets,table1):
                         """
                         for i,widget_type in enumerate(pgwidgets):
                             widget_type.click_element_function(pos)
+                            
+                        #Dynamic drawing of button,combo click
+                        for i,widget_type in enumerate(pgwidgets):
+                            for j,widget in enumerate(widget_type.elements):
+                                if type(widget)==Button:
+                                    if widget.is_point_in_rectangle(pos):
+                                        pgwidgets[i].elements[j].is_clicked=True
+                                        
+                                if type(widget)==ComboBox:
+                                    if widget._is_rolled and widget.pos[1] < pos[1] and pos[1] < widget.pos[1] + widget.size[1] * (len(widget.values) + 1):
+                                        widget.choose(pos)
+                                    elif not widget._is_rolled and widget.is_point_in_rectangle(pos):
+                                        widget.choose(pos)
+                            
+                            
                         
                                 
                 elif event.type == pygame.MOUSEBUTTONUP:
+                    pos = pygame.mouse.get_pos()
+                    
+                    
+                    #Dynamic drawing of button click
+                    for i,widget_type in enumerate(pgwidgets):
+                        for j,widget in enumerate(widget_type.elements):
+                            if type(widget)==Button:
+                                pgwidgets[i].elements[j].is_clicked=False
+                        
+                        
+                    
+                    
                     selected = None
                     new_select_possible=True
                 elif event.type == pygame.MOUSEMOTION:
