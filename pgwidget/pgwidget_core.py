@@ -211,13 +211,13 @@ class Cell(DraggableRect):
     def __init__(self,pos,size,color,coor=[0,0]):
         super().__init__(pos,size,color,draggable=False)
         self.coor=coor
-        self.label=Label([pos[0]+2,pos[1]+4],"",(0,0,0),font="Calibri",fontsize=15,max_text_length=size[0]-1)
+        self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
     def draw(self):
         if not self.selected:
             super().draw()
         else:
-            pygame.draw.rect(screen,self.color,[self.x,self.y,self.dx,self.dy])              
+            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])              
         self.label.draw()              
 
 class Table:
@@ -249,9 +249,9 @@ class Table:
         #selected cell
         if self.selected_cell_index is not None:
             cell=self.table_cells[self.selected_cell_index]
-            pygame.draw.rect(screen,(33,115,70),[cell.x-2,cell.y-2,cell.dx+3,cell.dy+3],2) 
-            pygame.draw.rect(screen,(255,255,255),[cell.x+cell.dx-3,cell.y+cell.dy-3,6,6],2) 
-            pygame.draw.rect(screen,(33,115,70),[cell.x+cell.dx-2,cell.y+cell.dy-2,5,5]) 
+            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2,cell.pos[1]-2,cell.size[0]+3,cell.size[1]+3],2) 
+            pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
+            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
             
             
     def is_clicked(self,pos):
@@ -418,7 +418,7 @@ class TextArea(DraggableRect):
         self.pos=pos
         self.size=size
         self.text=text
-        self.label=Label([pos[0]+2,pos[1]+4],self.text,(0,0,0),font="Calibri",fontsize=15,max_text_length=size[0]-1)
+        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
         self.border_color=border_color
         self.color=color
         self.fit2label()

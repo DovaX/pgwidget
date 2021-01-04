@@ -1,4 +1,4 @@
-import pgwidget.pgwidget_core as pgw
+import pgwidget_pkg.pgwidget.pgwidget_core as pgw
 import pygame
 
 
@@ -35,7 +35,8 @@ def click_table(pos):
 def click_combobox(pos):
     for i, combobox in enumerate(comboboxes.elements):
         if combobox.is_point_in_rectangle(pos):
-            combobox.choose(pos)
+            #combobox.choose(pos)
+            pass
                             
         
         
@@ -59,12 +60,17 @@ buttonimage1=ButtonImage([100,280],[50,50],img1,function=run_script_from_file)
 buttonimages.elements.append(buttonimage1)
 """
 
-lorem_ipsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+lorem_ipsum = 'blablablabalbalabalbalaaLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ahojahojahoj'
 
 
+
+
+
+    
 buttons=pgw.PgWidget()
 button1=pgw.Button([800,100],[80,20],"Submit")
 buttons.elements.append(button1)
+
 
 textareas=pgw.PgWidget()
 textarea1=pgw.TextArea([500,50],[200,120], lorem_ipsum)
@@ -88,7 +94,7 @@ checkbox1=pgw.Checkbox([1000,100],"blabla")
 checkboxes.elements.append(checkbox1)
 
 comboboxes = pgw.PgWidget(click_combobox)
-combobox = pgw.ComboBox([10, 150], [70, 19], ['klingons', 'humans', 'vulcans'], text='federation')
+combobox = pgw.ComboBox([10, 150], [100, 19], ['klingons', 'humans', 'vulcans'], text='federation')
 comboboxes.elements.append(combobox)
 
 rects=[]#[DraggableRect([50,50],[30,30],(200,200,200)),DraggableRect([150,100],[30,30],(200,200,200))]
