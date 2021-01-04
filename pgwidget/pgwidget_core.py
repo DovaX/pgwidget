@@ -123,41 +123,37 @@ root.update()
 
 
 class Label:
-    def __init__(self,pos,text,color,font="Cambria",fontsize=20,max_text_length=None):
-        self.pos=pos
+    def __init__(self,text,color,pos=[0,0],relative_pos=[0,0],font_type="Cambria",font_size=20,max_text_length=None,visible=True):
         self.text=text
         self.color=color
-        self.font=font
-        self.fontsize=fontsize
-        self.myfont = pygame.font.SysFont(self.font, self.fontsize)
+        self.pos=pos
         self.max_text_length=max_text_length
-        self.selected=False
+        self.font_type=font_type
+        self.font_size=font_size
+        self.relative_pos=relative_pos
+        self.myfont = pygame.font.SysFont(self.font_type, self.font_size)
+        self.lbl=self.myfont.render(self.text, self.font_size, self.color)
+        self.selected=False #dbtable -> shows just beginning of string
+        self.visible=visible
         
-    def draw(self):
-       
-        #print("Pixels",self.myfont.size(self.text))
-        self.shown_text=self.text
-        
+    def draw(self):       
+        self.shown_text=self.text    
         if self.max_text_length is not None:
-            #print("HEUREKA",self.max_text_length)
-            #print(self.shown_text)
+            print(self.max_text_length,self.shown_text)
+        
             self.text_length=self.myfont.size(self.shown_text)[0]
-            #print("text_length",self.text_length,self.myfont.size(self.shown_text))
             while self.text_length>self.max_text_length:
-                #print(self.text_length)
                 if self.selected:
                     self.shown_text=self.shown_text[1:]
                 else:
-                    self.shown_text=self.shown_text[:-1]
-                
+                    self.shown_text=self.shown_text[:-1]              
                 self.text_length=self.myfont.size(self.shown_text)[0]
-            
-        
-        try:
-            lbl = self.myfont.render(self.shown_text, 1, self.color)
-        except pygame.error as e:
-            lbl = self.myfont.render("", 1, self.color)
-        screen.blit(lbl, (self.pos[0], self.pos[1]))
+        if self.visible:
+            try:
+                self.lbl=self.myfont.render(self.shown_text, self.font_size, self.color)
+            except pygame.error as e:
+                self.lbl = self.myfont.render("", 1, self.color)
+            screen.blit(self.lbl, (self.pos[0], self.pos[1]))
            
 def refresh(pgwidgets):
     screen.fill(bg_color)
