@@ -173,19 +173,17 @@ def refresh(pgwidgets):
 
 class DraggableRect:
     def __init__(self,pos,size,color,draggable=True):
-        self.x=pos[0]
-        self.y=pos[1]
-        self.dx=size[0]
-        self.dy=size[1]
+        self.pos=pos
+        self.size=size
         self.color=color
         self.draggable=draggable
         self.selected=False
         
     def draw(self): 
-        pygame.draw.rect(screen,self.color,[self.x,self.y,self.dx,self.dy])    
+        pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])    
     
     def is_point_in_rectangle(self,pos):
-        if self.x<pos[0] and pos[0]<self.x+self.dx and self.y<pos[1] and pos[1]<self.y+self.dy:
+        if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.size[1]:
             return(True)
         else:
             return(False)
