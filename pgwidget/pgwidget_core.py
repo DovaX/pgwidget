@@ -426,25 +426,30 @@ class TextArea(DraggableRect):
     def blit_text(self, surface, text, color=pygame.Color('black')):
         words = [word.split(' ') for word in self.label.text.splitlines()]
         space = self.label.myfont.size(' ')[0]
-        max_width, max_height = self.size
-        x, y = self.pos
+        max_height = self.size[1]-10
+        x, y = self.label.pos
         for line in words:
             for word in line:
                 word_surface = self.label.myfont.render(word, 0, color)
                 word_width, word_height = word_surface.get_size()
-                if x + word_width >= max_width + self.pos[0]:
-                    x = self.pos[0]
+                if x + word_width >= self.label.max_text_length + self.label.pos[0]:
+                    x = self.label.pos[0]
                     y += word_height
+                    if y+word_height >= self.label.pos[1] + max_height:
+                        
+                        break
+                    
+        
                 surface.blit(word_surface, (x, y))
                 x += word_width + space
-            x = self.pos[0]
+            x = self.label.pos[0]
             y += word_height
-            if y >= self.pos[1] + max_height:
+            if y >= self.label.pos[1] + max_height:
                 break
         
     def draw(self):
         super().draw()
-        pygame.draw.rect(screen,self.border_color,[self.x,self.y,self.dx,self.dy],1)
+        pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
         self.label.draw = self.blit_text
         self.label.draw(screen, self.label.text)
 
@@ -456,7 +461,7 @@ class TextArea(DraggableRect):
             if line:
                 if self.label.myfont.size(line + " " + word)[0] > self.size[0] + 3:
                     final_text += line + "\n"
-                    line = ""
+                    line = word
                 else:
                     line += " " + word
             # empty line
