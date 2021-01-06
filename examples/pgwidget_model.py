@@ -1,4 +1,4 @@
-import pgwidget_pkg.pgwidget.pgwidget_core as pgw
+import pgwidget.pgwidget_core as pgw
 import pygame
 
 

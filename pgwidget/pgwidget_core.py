@@ -325,11 +325,13 @@ class Table:
         pass
                 
                 
-    def update_data(self,df):
+    def update_data(self,df, rows = None):
         """data layer"""  
         self.df=df
         self.table_cells=[]
         self.initialize_cells()
+        if rows is None:
+            rows = df.shape[0]
         print("updatedata",self.df)
         
         list1=df.values.tolist()
@@ -340,7 +342,7 @@ class Table:
             cell_index=self.find_cell_index(0,j)
             if cell_index is not None:
                 self.table_cells[cell_index].label.text=str(column_names[j])     
-        for i in range(len(list1)):
+        for i in range(min(len(list1), rows)):
             for j in range(len(list1[i])):
                 cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
