@@ -10,12 +10,13 @@ import pandas as pd
 
 
 """TKINTER PART"""
-"""
+
 import tkinter as tk
 
 from tkinter import LEFT
 
 root = tk.Tk()
+root.withdraw()
 
 
 WINDOW_SIZE=[1366,768]
@@ -29,7 +30,7 @@ embed.grid(columnspan = (600), rowspan = 500) # Adds grid
 
 os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
 os.environ['SDL_VIDEODRIVER'] = 'windib'
-"""
+
 
 """TKINTER END PART"""
 
@@ -60,7 +61,7 @@ screen=initialize_pg()
 
 """TKINTER PART"""
 
-"""
+
 def open_file(): 
     file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
     filename=""
@@ -85,7 +86,8 @@ def run_script_from_file():
 
 global loaded_filename
 
-def open_xlsx_file(): 
+def open_xlsx_file(*args): 
+    table=args[0]
     file = askopenfile(mode ='r', filetypes =[('Excel files', '*.xlsx')]) 
     filename=""
     if file is not None: 
@@ -118,7 +120,7 @@ from tkinter.filedialog import askopenfile,asksaveasfile
 
 root.update()
 
-"""
+
 """TKINTER END PART"""
 
 
@@ -139,7 +141,7 @@ class Label:
     def draw(self):       
         self.shown_text=self.text    
         if self.max_text_length is not None:
-            print(self.max_text_length,self.shown_text)
+            #print(self.max_text_length,self.shown_text)
         
             self.text_length=self.myfont.size(self.shown_text)[0]
             while self.text_length>self.max_text_length:
@@ -174,6 +176,7 @@ class DraggableRect:
         self.color=color
         self.draggable=draggable
         self.selected=False
+        self.visible=True
         
     def draw(self): 
         pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])    
@@ -359,10 +362,10 @@ class ButtonImage(DraggableRect):
     def run_function(self):
         self.function()
 
-"""
+
 def save_df(table1):
     table1.df.to_excel("name.xlsx")
-"""    
+  
 
 class RadioButton(DraggableRect):
     def __init__(self,pos,text,radio_group,selected=False):
@@ -508,8 +511,11 @@ class Button(DraggableRect):
         pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
         self.label.draw() 
     
-    def run_function(self):
-        self.function()
+    def run_function(self,*args):
+        if len(args)>0:
+            self.function(args)
+        else:
+            self.function()
         
 
     
@@ -708,13 +714,13 @@ def main_program_loop(pgwidgets,table1):
                 pygame.event.pump()
                 keys = pygame.key.get_pressed()
                 
-                """
+                
             try: #Handling tkinter and pygame loops
                 root.update()
             except tk.TclError as e:
                 sys.exit(0)
                 print(e)
-                """
+                
             pygame.display.flip()   
     
         except KeyboardInterrupt:
