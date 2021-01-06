@@ -328,6 +328,8 @@ class Table:
     def update_data(self,df):
         """data layer"""  
         self.df=df
+        self.table_cells=[]
+        self.initialize_cells()
         print("updatedata",self.df)
         
         list1=df.values.tolist()
