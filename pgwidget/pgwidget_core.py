@@ -227,7 +227,7 @@ class Table:
         self.rows=rows
         self.cols=cols
         self.margin=margin
-        self.table_size=[(self.cell_size[0]+self.margin)*self.cols,(self.cell_size[1]+self.margin)*self.rows]
+        self.table_size=[(self.cell_size[0]+self.margin)*self.cols,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,(212,212,212))
         self.table_cells=[]
         self.initialize_cells()
@@ -235,7 +235,12 @@ class Table:
         self.df=None
         
     def initialize_cells(self):
-        for i in range(self.rows):
+        for j in range(self.cols):
+            i=0
+            new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
+            self.table_cells.append(Cell(new_pos,self.cell_size,(230,230,230),coor=[i,j]))
+        
+        for i in range(1,self.rows+1):
             for j in range(self.cols):
                 new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
                 self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
@@ -252,6 +257,9 @@ class Table:
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2,cell.pos[1]-2,cell.size[0]+3,cell.size[1]+3],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
+        
+        pygame.draw.rect(screen,(0,0,0),[self.pos[0]-1,self.pos[1]-1]+self.table_size,3)
+        
             
             
     def is_clicked(self,pos):
@@ -317,11 +325,19 @@ class Table:
     def update_data(self,df):
         """data layer"""  
         self.df=df
+        print("updatedata",self.df)
         
         list1=df.values.tolist()
+        
+        column_names=df.columns
+        i=0
+        for j in range(len(column_names)):
+            cell_index=self.find_cell_index(0,j)
+            if cell_index is not None:
+                self.table_cells[cell_index].label.text=str(column_names[j])     
         for i in range(len(list1)):
             for j in range(len(list1[i])):
-                cell_index=self.find_cell_index(i,j)
+                cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
                     self.table_cells[cell_index].label.text=str(list1[i][j])           
 
