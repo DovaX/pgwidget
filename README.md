@@ -24,7 +24,7 @@ pgw.main_program_loop(pgwidgets,None)
 ```
 
 In examples folder you can get several GUI elements.
-![alt text](https://github.com/dovax/pgwidget/blob/main/image.jpg?raw=true)
+![alt text](https://github.com/dovax/pgwidget/blob/main/example1.png?raw=true)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
