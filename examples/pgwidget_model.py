@@ -60,7 +60,7 @@ buttonimage1=ButtonImage([100,280],[50,50],img1,function=run_script_from_file)
 buttonimages.elements.append(buttonimage1)
 """
 
-lorem_ipsum = 'blablablabalbalabalbalaaLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ahojahojahoj'
+lorem_ipsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ahojahojahoj'
 
 
 
@@ -78,11 +78,11 @@ textareas.elements.append(textarea1)
 
 
 radiobuttons=pgw.PgWidget(click_radiobutton)
-radio1=pgw.RadioButton([50,60],"radio1",1)
+radio1=pgw.RadioButton([250,50],"radio1",1)
 radiobuttons.elements.append(radio1)
-radio1=pgw.RadioButton([100,50],"radio2",1)
+radio1=pgw.RadioButton([250,80],"radio2",1)
 radiobuttons.elements.append(radio1)
-radio1=pgw.RadioButton([150,40],"radio3",1)
+radio1=pgw.RadioButton([250,110],"radio3",1)
 radiobuttons.elements.append(radio1)
 
 table1=pgw.Table([200,200],[63,19],25,17)
@@ -94,7 +94,7 @@ checkbox1=pgw.Checkbox([1000,100],"blabla")
 checkboxes.elements.append(checkbox1)
 
 comboboxes = pgw.PgWidget(click_combobox)
-combobox = pgw.ComboBox([10, 150], [100, 19], ['klingons', 'humans', 'vulcans'], text='federation')
+combobox = pgw.ComboBox([300, 100], [100, 19], ['klingons', 'humans', 'vulcans'], text='federation')
 comboboxes.elements.append(combobox)
 
 rects=[]#[DraggableRect([50,50],[30,30],(200,200,200)),DraggableRect([150,100],[30,30],(200,200,200))]
