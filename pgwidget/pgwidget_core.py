@@ -265,8 +265,7 @@ class Table:
         
             
             
-    def is_clicked(self,pos):
-        print("bla")
+    def is_point_in_rectangle(self,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.table_size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.table_size[1]:
             return(True)
         else:
@@ -496,16 +495,18 @@ class TextArea(DraggableRect):
 
 
 class Button(DraggableRect):
-    def __init__(self,pos,size,text,function=lambda *args:None,border_color=(0,0,0),color=(200,200,200)):
+    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=(0,0,0),color=(200,200,200),relative_pos=[0,0]):
         super().__init__(pos,size,color,draggable=False)
         self.pos=pos
         self.size=size
         self.border_color=border_color
         self.color=color
         self.text=text
-        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
+        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1,relative_pos=[2,4])
         self.function=function
         self.is_clicked=False
+        self.function_args=function_args
+        self.relative_pos=relative_pos
         
     def draw(self):
         if self.is_clicked:
@@ -518,8 +519,13 @@ class Button(DraggableRect):
     def run_function(self,*args):
         if len(args)>0:
             self.function(args)
+        elif self.function_args is not None:
+            self.function(self.function_args)
         else:
             self.function()
+            
+    def on_click(self):
+        self.run_function()
         
 
     
