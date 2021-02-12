@@ -87,7 +87,7 @@ def run_script_from_file():
 global loaded_filename
 
 def open_xlsx_file(*args): 
-    table=args[0]
+    table1=args[0]
     file = askopenfile(mode ='r', filetypes =[('Excel files', '*.xlsx')]) 
     filename=""
     if file is not None: 
@@ -542,25 +542,45 @@ class ComboBox(DraggableRect):
         self.border_color = border_color
         self._labels = []
         self._is_rolled = False
+        self.visible=True
         if text:
             self.cell = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
             self.cell.label.text = text
             self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
 
     def draw(self):
-        if hasattr(self, "text"):
-            pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
-            self.cell.draw()         
-            pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,2)
-            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],3)
-            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2],3)
-            pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
-            
-        if self._is_rolled:
-            for label, value in zip(self._labels, self.values):
-                label.label.text = value
-                label.draw()
+        if self.visible:
+            if hasattr(self, "text"):
+                pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
+                self.cell.draw()         
+                pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,2)
+                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],3)
+                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2],3)
+                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
+            if self._is_rolled:
+                for label, value in zip(self._labels, self.values):
+                    label.label.text = value
+                    label.draw()
+                
+    def is_point_in_rectangle(self,pos):
+        if not self._is_rolled:
+            result=super().is_point_in_rectangle(pos)
+            return(result)
+        else:
+            if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
+                return(True)
+            else:
+                return(False)  
+                    
+    def on_click(self):
+        pos=pygame.mouse.get_pos()        
+        if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
+            self.choose(pos)
+        elif not self._is_rolled and self.is_point_in_rectangle(pos):
+            self.choose(pos)
+        
+        #self.choose(pos)
 
     def roll(self):
         if not self._is_rolled:
@@ -639,11 +659,8 @@ def main_program_loop(pgwidgets,table1):
                                         pgwidgets[i].elements[j].is_clicked=True
                                         
                                 if type(widget)==ComboBox:
-                                    if widget._is_rolled and widget.pos[1] < pos[1] and pos[1] < widget.pos[1] + widget.size[1] * (len(widget.values) + 1):
-                                        widget.choose(pos)
-                                    elif not widget._is_rolled and widget.is_point_in_rectangle(pos):
-                                        widget.choose(pos)
-                            
+                                    widget.on_click()
+                                    
                             
                         
                                 
