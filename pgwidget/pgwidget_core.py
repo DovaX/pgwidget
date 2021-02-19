@@ -533,24 +533,26 @@ class Button(DraggableRect):
 
 
 class ComboBox(DraggableRect):
-    def __init__(self, pos, size, values, text=None, border_color=(0,0,0)):
+    def __init__(self, pos, size, values, text=None, border_color=(0,0,0),relative_pos=[0,0]):
         super().__init__(pos, size, color, draggable=False)
         self.pos = pos
         self.size = size
         self.values = values
-        self.text = text
+        #self.text = text
         self.border_color = border_color
         self._labels = []
         self._is_rolled = False
         self.visible=True
+        self.relative_pos=relative_pos
         if text:
             self.cell = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
             self.cell.label.text = text
             self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
+        #TODO elif - create empty Cell
 
     def draw(self):
         if self.visible:
-            if hasattr(self, "text"):
+            if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
                 self.cell.draw()         
                 pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,2)
