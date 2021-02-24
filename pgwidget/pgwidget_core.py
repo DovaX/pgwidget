@@ -539,28 +539,28 @@ class Button(DraggableRect):
         else:
             self.function()
             
+            
     def on_click(self):
         self.run_function()
         
 
-    
-
-
-
 class ComboBox(DraggableRect):
-    def __init__(self, pos, size, values, text=None, border_color=(0,0,0),relative_pos=[0,0]):
+    def __init__(self, pos, size, values, text=None, color=(212,212,212), border_color=(0,0,0),hover_color=(120,120,120),hover_label_color=(0,0,0),relative_pos=[0,0]):
         super().__init__(pos, size, color, draggable=False)
-        self.pos = pos
-        self.size = size
         self.values = values
         #self.text = text
         self.border_color = border_color
-        self._labels = []
+        self._cells = []
         self._is_rolled = False
         self.visible=True
         self.relative_pos=relative_pos
+        self.multiselect_indices=None
+        self.multiselect_values=[True,False] #True must be always the first element, False must be always the last element (Can be also 1 and 0)
+        self.hover_color=hover_color
+        self.hover_label_color=hover_label_color
+        
         if text:
-            self.cell = Cell(self.pos, self.size, (212,212,212), coor=[0, 0])
+            self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0])
             self.cell.label.text = text
             self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
         #TODO elif - create empty Cell
@@ -569,17 +569,45 @@ class ComboBox(DraggableRect):
         if self.visible:
             if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
-                self.cell.draw()         
-                pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,2)
-                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],3)
-                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+5],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2],3)
-                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                self.cell.draw()
+                pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,1)
+                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
+                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
+                #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
             if self._is_rolled:
-                for label, value in zip(self._labels, self.values):
-                    label.label.text = value
-                    label.draw()
+                pos=pygame.mouse.get_pos()
+                for cell, value in zip(self._cells, self.values):
+                    cell.label.text = value
+                    cell.draw()
+                self.on_hover(pos)
                 
+                self._draw_multiselect_crosses()
+     
+                
+            
+    def on_hover(self,pos):
+        if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1): #hovering
+            #super().draw(auto_draw_labels=False)
+            y=pos[1]-self.pos[1]
+            option_height=self.size[1]
+            index=y//option_height #0 - selected item
+            print("HOVERING",y,index)   
+            if index!=0: #not hover over selected item
+                pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
+                self._cells[index-1].label.color=self.hover_label_color
+                self._cells[index-1].label.draw()
+                self._cells[index-1].label.color=(0,0,0)
+    def _draw_multiselect_crosses(self):
+        if self.multiselect_indices is not None:
+            for multiselect_index,value in self.multiselect_indices.items(): 
+                if value!=self.multiselect_values[-1]: #i.e. value!=False
+                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]*(1/4+multiselect_index)],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]*(1/4+multiselect_index)+10],3)
+                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]*(1/4+multiselect_index)],[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]*(1/4+multiselect_index)+10],3)
+                    #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                    
+
+    
     def is_point_in_rectangle(self,pos):
         if not self._is_rolled:
             result=super().is_point_in_rectangle(pos)
@@ -594,38 +622,51 @@ class ComboBox(DraggableRect):
         pos=pygame.mouse.get_pos()        
         if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
             self.choose(pos)
+            
         elif not self._is_rolled and self.is_point_in_rectangle(pos):
-            self.choose(pos)
+            self.roll()
+            
         
         #self.choose(pos)
 
     def roll(self):
         if not self._is_rolled:
             self._is_rolled = not self._is_rolled
-            self._labels = self._getLabels()
+            self._cells = self._get_option_cells()
             self._dy = self.size[1] * (len(self.values) + 1)        
         else:
             self._is_rolled = not self._is_rolled
     
     
     def choose(self, pos):
-        if self._is_rolled:
-            length = pos[1] - self.pos[1]
-            idx = abs(length // self.size[1])
-            print(idx)
-            if idx == 0:
+        index = abs((pos[1] - self.pos[1]) // self.size[1])
+        if self.multiselect_indices is None:
+            if index == 0:
                 self.roll()
             else:
-                self.cell.label.text = self.values[idx - 1]
+                self.cell.label.text = self.values[index - 1]
                 self.roll()
-        elif self.is_point_in_rectangle(pos):
-            self.roll()
-    
+        else:
+            if index == 0:
+                self.roll()
+            elif index in list(self.multiselect_indices.keys()):
+                next_multiselect_value=self._get_next_multiselect_value(self.multiselect_indices[index])
+                self.multiselect_indices[index]=next_multiselect_value
+            elif index<=len(self.values):
+                self.multiselect_indices[index]=self.multiselect_values[0]
 
-    def _getLabels(self):
+    def _get_next_multiselect_value(self,value):
+        index=self.multiselect_values.index(value)
+        if index+1>=len(self.multiselect_values):
+            final_index=0
+        else:
+            final_index=index+1
+        return(self.multiselect_values[final_index])
+
+    def _get_option_cells(self):
         tmp = []
         for i in range(len(self.values)):
-            tmp.append(Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, (212,212,212), coor=[0, i + 1]))
+            tmp.append(Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, self.color, coor=[0, i + 1]))
         return (tmp)
 
 
@@ -648,7 +689,7 @@ def main_program_loop(pgwidgets,table1):
     direction_list=[0,0,0,0]
     selected=None
 
-    while not done:  
+    while not done:
         try:   
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
