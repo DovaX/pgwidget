@@ -495,7 +495,7 @@ class TextArea(DraggableRect):
 
 
 class Button(DraggableRect):
-    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=(0,0,0),color=(200,200,200),relative_pos=[0,0]):
+    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=(0,0,0),color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=(0,0,0)):
         super().__init__(pos,size,color,draggable=False)
         self.pos=pos
         self.size=size
@@ -507,6 +507,10 @@ class Button(DraggableRect):
         self.is_clicked=False
         self.function_args=function_args
         self.relative_pos=relative_pos
+        self.visible=visible
+        self.hover_color=hover_color
+        self.hover_label_color=hover_label_color
+        
         
     def draw(self):
         if self.is_clicked:
@@ -514,7 +518,18 @@ class Button(DraggableRect):
         else:
             super().draw()
         pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
-        self.label.draw() 
+        self.label.draw()
+        
+        pos=pygame.mouse.get_pos()
+        self.on_hover(pos)
+    
+    def on_hover(self,pos):
+        if self.is_point_in_rectangle(pos):
+            pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+            self.label.draw() 
+            
+        
+        
     
     def run_function(self,*args):
         if len(args)>0:
