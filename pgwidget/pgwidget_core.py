@@ -211,7 +211,7 @@ class DraggableRect:
  
  
 class Cell(DraggableRect):
-    def __init__(self,pos,size,color,coor=[0,0]):
+    def __init__(self,pos,size,color,coor=[0,0],relative_pos=[0,0]):
         super().__init__(pos,size,color,draggable=False)
         self.coor=coor
         self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
@@ -263,8 +263,9 @@ class Table:
         
         pygame.draw.rect(screen,(0,0,0),[self.pos[0]-1,self.pos[1]-1]+self.table_size,3)
         
-            
-            
+           
+        
+       
     def is_point_in_rectangle(self,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.table_size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.table_size[1]:
             return(True)
@@ -528,9 +529,6 @@ class Button(DraggableRect):
             pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
             self.label.draw() 
             
-        
-        
-    
     def run_function(self,*args):
         if len(args)>0:
             self.function(args)
@@ -560,13 +558,14 @@ class ComboBox(DraggableRect):
         self.hover_label_color=hover_label_color
         
         if text:
-            self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0])
+            self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0],relative_pos=[0,0])
             self.cell.label.text = text
             self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
         #TODO elif - create empty Cell
 
     def draw(self):
         if self.visible:
+            self._update_cells_positions()
             if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
                 self.cell.draw()
@@ -584,7 +583,7 @@ class ComboBox(DraggableRect):
                 
                 self._draw_multiselect_crosses()
      
-                
+        
             
     def on_hover(self,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1): #hovering
@@ -598,6 +597,7 @@ class ComboBox(DraggableRect):
                 self._cells[index-1].label.color=self.hover_label_color
                 self._cells[index-1].label.draw()
                 self._cells[index-1].label.color=(0,0,0)
+                
     def _draw_multiselect_crosses(self):
         if self.multiselect_indices is not None:
             for multiselect_index,value in self.multiselect_indices.items(): 
@@ -668,6 +668,14 @@ class ComboBox(DraggableRect):
         for i in range(len(self.values)):
             tmp.append(Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, self.color, coor=[0, i + 1]))
         return (tmp)
+
+    def _update_cells_positions(self):
+        self.cell.pos=[self.pos[0], self.pos[1]]
+        self.cell.label.pos=[self.pos[0], self.pos[1]]
+        
+        for i in range(len(self._cells)):
+            self._cells[i].pos=[self.pos[0], self.pos[1] + self.size[1] * (i + 1)]
+            self._cells[i].label.pos=[self.pos[0], self.pos[1] + self.size[1] * (i + 1)]
 
 
 class PgWidget:
