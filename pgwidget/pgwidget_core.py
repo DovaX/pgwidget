@@ -15,6 +15,9 @@ import tkinter as tk
 
 from tkinter import LEFT
 
+
+
+"""
 root = tk.Tk()
 root.withdraw()
 
@@ -30,7 +33,7 @@ embed.grid(columnspan = (600), rowspan = 500) # Adds grid
 
 os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
 os.environ['SDL_VIDEODRIVER'] = 'windib'
-
+"""
 
 """TKINTER END PART"""
 
@@ -44,11 +47,11 @@ def initialize_pg():
     screen = pygame.display.set_mode([1366,768])
             
     pygame.init()
-    pygame.display.set_caption("Drag and drop")
+    pygame.display.set_caption("Forloop")
     #clock=pygame.time.Clock()
     screen.fill(bg_color)
     try:
-        window_icon = pygame.image.load('icon.png')
+        window_icon = pygame.image.load('png//start.png')
         pygame.display.set_icon(window_icon)
     except FileNotFoundError:
         print("Warning: Icon (icon.png) not found, skipped")
@@ -118,8 +121,13 @@ from tkinter.filedialog import askopenfile,asksaveasfile
 #button1 = Button(buttonwin,text = 'Draw',  command=open_file)
 #button1.pack(side=LEFT)
 
-root.update()
 
+
+
+
+"""
+root.update()
+"""
 
 """TKINTER END PART"""
 
@@ -137,6 +145,7 @@ class Label:
         self.lbl=self.myfont.render(self.text, self.font_size, self.color)
         self.selected=False #dbtable -> shows just beginning of string
         self.visible=visible
+        self.visibility_layer=100
         
     def draw(self):       
         self.shown_text=self.text    
@@ -177,6 +186,7 @@ class DraggableRect:
         self.draggable=draggable
         self.selected=False
         self.visible=True
+        self.visibility_layer=100
         
     def draw(self): 
         pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])    
@@ -236,6 +246,7 @@ class Table:
         self.initialize_cells()
         self.selected_cell_index=None
         self.df=None
+        self.visibility_layer=100
         
     def initialize_cells(self):
         for j in range(self.cols):
@@ -509,20 +520,22 @@ class Button(DraggableRect):
         self.function_args=function_args
         self.relative_pos=relative_pos
         self.visible=visible
+        self.visibility_layer=100
         self.hover_color=hover_color
         self.hover_label_color=hover_label_color
         
         
     def draw(self):
-        if self.is_clicked:
-            pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
-        else:
-            super().draw()
-        pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
-        self.label.draw()
-        
-        pos=pygame.mouse.get_pos()
-        self.on_hover(pos)
+        if self.visible:
+            if self.is_clicked:
+                pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
+            else:
+                super().draw()
+            pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
+            self.label.draw()
+            
+            pos=pygame.mouse.get_pos()
+            self.on_hover(pos)
     
     def on_hover(self,pos):
         if self.is_point_in_rectangle(pos):
@@ -539,7 +552,8 @@ class Button(DraggableRect):
             
             
     def on_click(self):
-        self.run_function()
+        if self.visible:
+            self.run_function()
         
 
 class ComboBox(DraggableRect):
@@ -551,8 +565,10 @@ class ComboBox(DraggableRect):
         self._cells = []
         self._is_rolled = False
         self.visible=True
+        self.function=lambda *x:None
+        self.function_args=[]
         self.relative_pos=relative_pos
-        self.multiselect_indices=None
+        self.multiselect_indices=None #dict for multiselect
         self.multiselect_values=[True,False] #True must be always the first element, False must be always the last element (Can be also 1 and 0)
         self.hover_color=hover_color
         self.hover_label_color=hover_label_color
@@ -630,12 +646,15 @@ class ComboBox(DraggableRect):
         #self.choose(pos)
 
     def roll(self):
-        if not self._is_rolled:
-            self._is_rolled = not self._is_rolled
+        if not self._is_rolled: 
             self._cells = self._get_option_cells()
             self._dy = self.size[1] * (len(self.values) + 1)        
         else:
-            self._is_rolled = not self._is_rolled
+            self.run_function()
+        self._is_rolled = not self._is_rolled
+    
+    def run_function(self):
+        self.function(self.function_args)
     
     
     def choose(self, pos):
@@ -807,12 +826,13 @@ def main_program_loop(pgwidgets,table1):
                 pygame.event.pump()
                 keys = pygame.key.get_pressed()
                 
-                
+            """    
             try: #Handling tkinter and pygame loops
                 root.update()
             except tk.TclError as e:
                 sys.exit(0)
                 print(e)
+            """
                 
             pygame.display.flip()   
     
