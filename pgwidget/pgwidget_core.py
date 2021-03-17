@@ -165,6 +165,11 @@ class Label:
             except pygame.error as e:
                 self.lbl = self.myfont.render("", 1, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
+            
+    def get_pixel_length(self):
+        text_pixels=self.myfont.size(self.text)[0]
+        return(text_pixels)
+        
            
 def refresh(pgwidgets):
     screen.fill(bg_color)
