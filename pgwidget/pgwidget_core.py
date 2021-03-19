@@ -11,9 +11,9 @@ import pandas as pd
 
 """TKINTER PART"""
 
-import tkinter as tk
+#import tkinter as tk
 
-from tkinter import LEFT
+#from tkinter import LEFT
 
 
 
@@ -166,6 +166,8 @@ class Label:
                 self.lbl = self.myfont.render("", 1, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
             
+
+            
     def get_pixel_length(self):
         text_pixels=self.myfont.size(self.text)[0]
         return(text_pixels)
@@ -192,9 +194,15 @@ class DraggableRect:
         self.selected=False
         self.visible=True
         self.visibility_layer=100
+        self.is_drawing_children=True
         
     def draw(self): 
         pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])    
+    
+    def draw_children(self):
+        #can be overrided
+        pass
+    
     
     def is_point_in_rectangle(self,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.size[1]:
@@ -239,25 +247,32 @@ class Cell(DraggableRect):
         self.label.draw()              
 
 class Table:
-    def __init__(self,pos,cell_size,rows,cols,margin=1):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=3):
+        
+        self.include_header=include_header
         self.pos=pos
         self.cell_size=cell_size
         self.rows=rows
         self.cols=cols
         self.margin=margin
+        self.frame_cell_color=frame_cell_color
+        self.header_color=header_color
+        
         self.table_size=[(self.cell_size[0]+self.margin)*self.cols,(self.cell_size[1]+self.margin)*(self.rows+1)]
-        self.frame_cell=Cell(self.pos,self.table_size,(212,212,212))
+        self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
         self.table_cells=[]
         self.initialize_cells()
         self.selected_cell_index=None
         self.df=None
         self.visibility_layer=100
+        self.frame_border_width=frame_border_width
         
     def initialize_cells(self):
         for j in range(self.cols):
             i=0
             new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
-            self.table_cells.append(Cell(new_pos,self.cell_size,(230,230,230),coor=[i,j]))
+            self.table_cells.append(Cell(new_pos,self.cell_size,self.header_color,coor=[i,j]))
+        
         
         for i in range(1,self.rows+1):
             for j in range(self.cols):
@@ -277,9 +292,11 @@ class Table:
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
         
-        pygame.draw.rect(screen,(0,0,0),[self.pos[0]-1,self.pos[1]-1]+self.table_size,3)
+        pygame.draw.rect(screen,(0,0,0),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
-           
+          
+    def draw_children(self):
+        pass
         
        
     def is_point_in_rectangle(self,pos):
@@ -530,6 +547,7 @@ class Button(DraggableRect):
         self.hover_label_color=hover_label_color
         
         
+        
     def draw(self):
         if self.visible:
             if self.is_clicked:
@@ -669,6 +687,7 @@ class ComboBox(DraggableRect):
                 self.roll()
             else:
                 self.cell.label.text = self.values[index - 1]
+                
                 self.roll()
         else:
             if index == 0:
