@@ -599,7 +599,10 @@ class ComboBox(DraggableRect):
         if text:
             self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0],relative_pos=[0,0])
             self.cell.label.text = text
-            self.cell.label.pos[0]=self.cell.label.pos[0]+1 #2 pixels from border
+            #self.cell.label.pos[0]=self.cell.label.pos[0]+4#2 pixels from border
+            #self.cell.label.pos[1]=self.cell.label.pos[1]+3
+            #self.cell.label.relative_pos[0]=self.cell.label.relative_pos[0]+2#2 pixels from border
+            #self.cell.label.relative_pos[1]=self.cell.label.relative_pos[1]+2
         #TODO elif - create empty Cell
 
     def draw(self):
