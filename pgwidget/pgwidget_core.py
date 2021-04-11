@@ -142,7 +142,7 @@ class Label:
         self.font_size=font_size
         self.relative_pos=relative_pos
         self.myfont = pygame.font.SysFont(self.font_type, self.font_size)
-        self.lbl=self.myfont.render(self.text, self.font_size, self.color)
+        self.lbl=self.myfont.render(self.text, True, self.color)
         self.selected=False #dbtable -> shows just beginning of string
         self.visible=visible
         self.visibility_layer=100
@@ -161,9 +161,9 @@ class Label:
                 self.text_length=self.myfont.size(self.shown_text)[0]
         if self.visible:
             try:
-                self.lbl=self.myfont.render(self.shown_text, self.font_size, self.color)
+                self.lbl=self.myfont.render(self.shown_text, True, self.color)
             except pygame.error as e:
-                self.lbl = self.myfont.render("", 1, self.color)
+                self.lbl = self.myfont.render("", True, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
             
 
@@ -479,14 +479,14 @@ class TextArea(DraggableRect):
         self.color=color
         self.fit2label()
 
-    def blit_text(self, surface, text, color=pygame.Color('black')):
+    def blit_text(self, surface, text, color=(0,0,0)):
         words = [word.split(' ') for word in self.label.text.splitlines()]
         space = self.label.myfont.size(' ')[0]
         max_height = self.size[1]-10
         x, y = self.label.pos
         for line in words:
             for word in line:
-                word_surface = self.label.myfont.render(word, 0, color)
+                word_surface = self.label.myfont.render(word, True, color)
                 word_width, word_height = word_surface.get_size()
                 if x + word_width >= self.label.max_text_length + self.label.pos[0]:
                     x = self.label.pos[0]
