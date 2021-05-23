@@ -4,8 +4,6 @@ import sys
 
 import os
 
-
-
 import pandas as pd
 
 
@@ -597,7 +595,7 @@ class ComboBox(DraggableRect):
         self.hover_label_color=hover_label_color
         
         if text:
-            self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0],relative_pos=[0,0])
+            self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0],relative_pos=[2,2])
             self.cell.label.text = text
             #self.cell.label.pos[0]=self.cell.label.pos[0]+4#2 pixels from border
             #self.cell.label.pos[1]=self.cell.label.pos[1]+3
@@ -895,6 +893,5 @@ def main_program_loop(pgwidgets,table1):
     pygame.display.quit()
     pygame.quit()
     sys.exit(0)
-
 
 #main_program_loop()
