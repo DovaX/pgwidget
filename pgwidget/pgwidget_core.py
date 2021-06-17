@@ -173,34 +173,101 @@ class Label:
            
 def refresh(pgwidgets):
     screen.fill(bg_color)
-    """
-    for i,rect in enumerate(rects):
-        rect.draw()
-    """
         
     for j,widget_type in enumerate(pgwidgets):
         for i,widget in enumerate(widget_type.elements):
-            widget.draw()
+            widget.draw(screen)
             
 
-class DraggableRect:
-    def __init__(self,pos,size,color,draggable=True):
+ 
+         
+class CollidableComponent:
+    def is_collided(self,rects):
+        for i in range(len(rects)):
+            if rects[i]!=self:
+                collision=False
+                if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]]):
+                    collision=True
+                if self.is_point_in_rectangle([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]]):
+                    collision=True
+                if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]+rects[i].size[1]]):
+                    collision=True
+                if self.is_point_in_rectangle([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]+rects[i].size[1]]):
+                    collision=True
+                if collision:
+                    self.collision_function()
+    
+    def collision_function(self):
+        pass
+        #self.dx+=0.1
+        #self.dy+=0.1
+        
+        
+class SelectableComponent:
+    def __init__(self):
+        self.selection_count=0
+        self.function=lambda *x:None
+        self.function_args=[]
+        self.is_drawing_selection_frame=True
+        
+    def draw_selection_frame(self,screen):
+        if self.selection_count>0:
+            if self.is_drawing_selection_frame:    
+                pygame.draw.rect(screen,c.red,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+    
+    def on_click(self):    
+        #show
+        self.visible=True
+        self.selection_count+=1
+        self.item_detail_form.on_click()
+        
+     
+        if len(self.function_args)>0:
+            self.function(self.function_args)
+        else:
+            self.function()  
+            
+    
+   
+class ComponentContainingLabels:
+    def __init__(self):
+        self.labels=[]
+        
+    def draw_labels(self,screen):
+        for i,label in enumerate(self.labels):
+            if label.visible:
+                label.pos=[self.pos[0]+label.relative_pos[0]+5,self.pos[1]+label.relative_pos[1]+5]
+                label.draw(screen)
+   
+
+class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
+        multi_super(SelectableComponent,self)
+        multi_super(ComponentContainingLabels,self)
         self.pos=pos
         self.size=size
         self.color=color
-        self.draggable=draggable
+        self.is_draggable=is_draggable
+        
         self.selected=False
         self.visible=True
         self.visibility_layer=100
-        self.is_drawing_children=True
         
-    def draw(self): 
-        pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])    
-    
-    def draw_children(self):
-        #can be overrided
-        pass
-    
+        self.frame_color=frame_color
+        self.relative_pos=relative_pos
+        self.has_frame=has_frame
+         
+    def draw(self,screen,auto_draw_labels=True): 
+        #Warning: Image descendant does not inherit draw method
+        if self.visible:
+            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
+            
+            if self.has_frame:
+                pygame.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+            self.draw_selection_frame(screen)
+             
+            if auto_draw_labels:
+                self.draw_labels(screen)   
     
     def is_point_in_rectangle(self,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.size[1]:
@@ -208,29 +275,6 @@ class DraggableRect:
         else:
             return(False)
     
-    def is_collided(self,rects):
-        collision=False
-        for i in range(len(rects)):
-            if rects[i]!=self:
-                if self.is_point_in_rectangle([rects[i].x,rects[i].y]):
-                    collision=True
-                    index=i
-                if self.is_point_in_rectangle([rects[i].x+rects[i].dx,rects[i].y]):
-                    collision=True
-                    index=i
-                if self.is_point_in_rectangle([rects[i].x,rects[i].y+rects[i].dy]):
-                    collision=True
-                    index=i
-                if self.is_point_in_rectangle([rects[i].x+rects[i].dx,rects[i].y+rects[i].dy]):
-                    collision=True
-                    index=i
-        if collision:
-            self.collision_function(rects[index])
-
-    def collision_function(self,collided_rect):
-        pass        
- 
- 
 class Cell(DraggableRect):
     def __init__(self,pos,size,color,coor=[0,0],relative_pos=[0,0]):
         super().__init__(pos,size,color,draggable=False)
