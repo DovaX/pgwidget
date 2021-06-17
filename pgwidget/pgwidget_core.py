@@ -5,7 +5,9 @@ import sys
 import os
 
 import pandas as pd
+from multinherit.multinherit import multi_super
 
+from helper import c
 
 """TKINTER PART"""
 
@@ -145,7 +147,7 @@ class Label:
         self.visible=visible
         self.visibility_layer=100
         
-    def draw(self):       
+    def draw(self,screen):       
         self.shown_text=self.text    
         if self.max_text_length is not None:
             #print(self.max_text_length,self.shown_text)
@@ -275,22 +277,117 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         else:
             return(False)
     
+    
 class Cell(DraggableRect):
     def __init__(self,pos,size,color,coor=[0,0],relative_pos=[0,0]):
-        super().__init__(pos,size,color,draggable=False)
+        super().__init__(pos,size,color,is_draggable=False,has_frame=False)
         self.coor=coor
         self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
-    def draw(self):
+    def draw(self,screen):
         if not self.selected:
-            super().draw()
+            super().draw(screen)
         else:
             pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])              
-        self.label.draw()              
+        self.label.draw(screen)              
 
-class Table:
-    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=3):
+
+class Scrollbar(DraggableRect): #ImprovedDraggableRect
+    def __init__(self,pos,size,percentage=0.2):
+        super().__init__(pos,size,color=(240,240,240),frame_color=(200,200,200))
+        self.is_clicked=False
+        self.percentage=percentage
+        self.scrollbar_handle=ScrollbarHandle([pos[0],pos[1]+15],[size[0],(size[1]-30)],self.percentage)
+        self.max_handle_offset=(1-self.percentage)*(size[1]-30)
+    
+    def calculate_handle_offset(self): 
+        offset=self.scrollbar_handle.pos[1]-self.pos[1]-15
+        #print(offset,self.max_handle_offset,offset/self.max_handle_offset)
+        return(offset)
+        #self.scrollbar_handle
         
+    def calculate_handle_ratio_position(self):
+        offset=self.calculate_handle_offset()
+        return(offset/self.max_handle_offset)
+        
+    def draw(self,screen):
+        super().draw(screen)
+
+        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+self.size[0]-5,self.pos[1]+10],2)
+        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+4,self.pos[1]+10],2)
+        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]-10],2)
+        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+4,self.pos[1]+self.size[1]-10],2)
+        
+        self.scrollbar_handle.draw(screen)
+        
+    
+    def on_click(self):
+        self.scrollbar_handle.on_click()
+        self.is_clicked=True
+        
+        pos=pygame.mouse.get_pos()
+        if self.calculate_handle_ratio_position()>0:
+            if pos[1]<self.pos[1]+15: #upper arrow
+                self.scrollbar_handle.pos[1]-=5
+        if self.calculate_handle_ratio_position()<1:
+            if pos[1]>self.pos[1]+self.size[1]-15: #upper arrow
+                self.scrollbar_handle.pos[1]+=5
+                
+    def on_drag(self,offset_pos_y):
+        self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
+        ratio_position=self.calculate_handle_ratio_position()
+        if ratio_position<0:
+            self.scrollbar_handle.pos=[self.pos[0],self.pos[1]+15]
+        elif ratio_position>1:
+            self.scrollbar_handle.pos=[self.pos[0],self.pos[1]+self.size[1]-self.scrollbar_handle.size[1]-15]
+            
+        
+ #To be migrated to pgwidget
+class ScrollbarHandle(DraggableRect): #ImprovedDraggableRect
+    def __init__(self,pos,size,percentage):
+        super().__init__(pos,[size[0],size[1]*percentage],color=(240,240,240),frame_color=(200,200,200))
+        self.is_clicked=False
+              
+    def draw(self,screen):
+        super().draw(screen)
+        if self.is_clicked:
+            pygame.draw.rect(screen,(166,166,166),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
+    
+        else:    
+            pygame.draw.rect(screen,(205,205,205),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
+    
+    def on_click(self):
+        self.is_clicked=True
+        
+
+
+class ScrollableComponent:
+    def __init__(self,pos,size,horizontal_offset=-15): 
+        self.scrollbar=Scrollbar([pos[0]+size[0]+horizontal_offset,pos[1]],[15,size[1]],0.3)
+        self.total_height=size[1]/self.scrollbar.percentage
+        self.handle_offset=0 
+        
+       
+    def draw(self,screen):
+        self.scrollbar.draw(screen)
+ 
+        
+    def on_click(self):
+        pos=pygame.mouse.get_pos()
+        if self.scrollbar.is_point_in_rectangle(pos):
+            self.scrollbar.on_click()
+        
+        
+        
+    def on_drag(self,offset_pos_y):
+        self.scrollbar.on_drag(offset_pos_y)
+        self.handle_offset=self.scrollbar.calculate_handle_offset()
+        
+        
+
+
+class Table(ScrollableComponent):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=0):
         self.include_header=include_header
         self.pos=pos
         self.cell_size=cell_size
@@ -299,42 +396,67 @@ class Table:
         self.margin=margin
         self.frame_cell_color=frame_cell_color
         self.header_color=header_color
+        self.col_width_dict=col_width_dict  #key=index of column, value=size_x in pixels
         
         self.table_size=[(self.cell_size[0]+self.margin)*self.cols,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
         self.table_cells=[]
-        self.initialize_cells()
+        self._init_col_width_dict() 
+        self._initialize_cells()
         self.selected_cell_index=None
         self.df=None
         self.visibility_layer=100
-        self.frame_border_width=frame_border_width
+        self.frame_border_width=frame_border_width   
+        super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
         
-    def initialize_cells(self):
+    
+    """
+    def _get_cell_size(self,col_index):
+        if col_index in self.col_width_dict.keys():
+            x_cell_size=self.col_width_dict[col_index]
+        else:
+            x_cell_size=self.cell_size[0]
+        cell_size=(x_cell_size,self.cell_size[1])
+        return(cell_size)
+    """
+    
+    def _init_col_width_dict(self):
+        for j in range(self.cols):
+            if not j in self.col_width_dict.keys():
+                print("HELLO")
+                self.col_width_dict[j]=self.cell_size[0]
+    
+    def _initialize_cells(self):
+        print(self.col_width_dict)
+        cumulative_x_pos=0
         for j in range(self.cols):
             i=0
-            new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
-            self.table_cells.append(Cell(new_pos,self.cell_size,self.header_color,coor=[i,j]))
-        
-        
-        for i in range(1,self.rows+1):
-            for j in range(self.cols):
-                new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
+            new_pos=[self.pos[0]+cumulative_x_pos+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
+            self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],self.header_color,coor=[i,j]))
+            for i in range(1,self.rows+1):    
+                new_pos=[self.pos[0]+cumulative_x_pos+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
                 self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
+            
+            cumulative_x_pos+=self.col_width_dict[j]
+            
                 
-    def draw(self):
-        self.frame_cell.draw()
+    def draw(self,screen):
+        self.frame_cell.draw(screen)
         
         for i,cell in enumerate(self.table_cells):
-            cell.draw()
-            
+            cell.draw(screen)
+        
+        pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
+        
         #selected cell
         if self.selected_cell_index is not None:
             cell=self.table_cells[self.selected_cell_index]
-            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2,cell.pos[1]-2,cell.size[0]+3,cell.size[1]+3],2) 
+            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
         
-        pygame.draw.rect(screen,(0,0,0),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
+        super().draw(screen)
+        
         
           
     def draw_children(self):
@@ -404,7 +526,7 @@ class Table:
         """data layer"""  
         self.df=df
         self.table_cells=[]
-        self.initialize_cells()
+        self._initialize_cells()
         if rows is None:
             rows = df.shape[0]
         print("updatedata",self.df)
@@ -421,11 +543,13 @@ class Table:
             for j in range(len(list1[i])):
                 cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
-                    self.table_cells[cell_index].label.text=str(list1[i][j])           
+                    self.table_cells[cell_index].label.text=str(list1[i][j]) 
+        
+    
 
 class ButtonImage(DraggableRect):
     def __init__(self,pos,size,img,text="",function=lambda *args:None): #default: do nothing function
-        super().__init__(pos,size,(0,0,0),draggable=False)    
+        super().__init__(pos,size,(0,0,0),is_draggable=False)    
         self.pos=pos
         self.size=size
         self.img=img
@@ -435,7 +559,7 @@ class ButtonImage(DraggableRect):
     def rescale(self):
         self.img=pygame.transform.smoothscale(self.img, (self.size[0], self.size[1]))
                 
-    def draw(self):   
+    def draw(self,screen):   
         screen.blit(self.img,self.pos)
         
     def run_function(self):
@@ -449,7 +573,7 @@ def save_df(table1):
 class RadioButton(DraggableRect):
     def __init__(self,pos,text,radio_group,selected=False):
         self.size=[20,20]
-        super().__init__(pos,self.size,(0,0,0),draggable=False)
+        super().__init__(pos,self.size,(0,0,0),is_draggable=False)
         self.pos=pos
         self.text=text
         self.radio_group=radio_group
@@ -475,7 +599,7 @@ class RadioButton(DraggableRect):
            
         
     
-    def draw(self):
+    def draw(self,screen):
         if self.selected:
             screen.blit(self.img_full,self.pos)
         else:
@@ -484,7 +608,7 @@ class RadioButton(DraggableRect):
 class Checkbox(DraggableRect):
     def __init__(self,pos,text,selected=False):
         self.size=[20,20]
-        super().__init__(pos,self.size,(0,0,0),draggable=False)
+        super().__init__(pos,self.size,(0,0,0),is_draggable=False)
         self.pos=pos
         self.text=text
         self.selected=selected
@@ -504,7 +628,7 @@ class Checkbox(DraggableRect):
         self.img_empty=pygame.transform.smoothscale(self.img_empty, (self.size[0], self.size[1]))
         self.img_full=pygame.transform.smoothscale(self.img_full, (self.size[0], self.size[1]))
              
-    def draw(self):
+    def draw(self,screen):
         if self.selected:
             screen.blit(self.img_full,self.pos)
         else:
@@ -512,7 +636,7 @@ class Checkbox(DraggableRect):
 
 class TextArea(DraggableRect):
     def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255)):
-        super().__init__(pos,size,color,draggable=False)
+        super().__init__(pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
         self.text=text
@@ -545,8 +669,8 @@ class TextArea(DraggableRect):
             if y >= self.label.pos[1] + max_height:
                 break
         
-    def draw(self):
-        super().draw()
+    def draw(self,screen):
+        super().draw(screen)
         pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
         self.label.draw = self.blit_text
         self.label.draw(screen, self.label.text)
@@ -572,7 +696,7 @@ class TextArea(DraggableRect):
 
 class Button(DraggableRect):
     def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=(0,0,0),color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=(0,0,0)):
-        super().__init__(pos,size,color,draggable=False)
+        super().__init__(pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
         self.border_color=border_color
@@ -590,14 +714,14 @@ class Button(DraggableRect):
         
         
         
-    def draw(self):
+    def draw(self,screen):
         if self.visible:
             if self.is_clicked:
                 pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
             else:
-                super().draw()
+                super().draw(screen)
             pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
-            self.label.draw()
+            self.label.draw(screen)
             
             pos=pygame.mouse.get_pos()
             self.on_hover(pos)
@@ -605,7 +729,7 @@ class Button(DraggableRect):
     def on_hover(self,pos):
         if self.is_point_in_rectangle(pos):
             pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
-            self.label.draw() 
+            self.label.draw(screen) 
             
     def run_function(self,*args):
         if len(args)>0:
@@ -623,7 +747,7 @@ class Button(DraggableRect):
 
 class ComboBox(DraggableRect):
     def __init__(self, pos, size, values, text=None, color=(212,212,212), border_color=(0,0,0),hover_color=(120,120,120),hover_label_color=(0,0,0),relative_pos=[0,0]):
-        super().__init__(pos, size, color, draggable=False)
+        super().__init__(pos, size, color, is_draggable=False)
         self.values = values
         #self.text = text
         self.border_color = border_color
@@ -647,12 +771,12 @@ class ComboBox(DraggableRect):
             #self.cell.label.relative_pos[1]=self.cell.label.relative_pos[1]+2
         #TODO elif - create empty Cell
 
-    def draw(self):
+    def draw(self,screen):
         if self.visible:
             self._update_cells_positions()
             if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
-                self.cell.draw()
+                self.cell.draw(screen)
                 pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,1)
                 pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
                 pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
@@ -662,7 +786,7 @@ class ComboBox(DraggableRect):
                 pos=pygame.mouse.get_pos()
                 for cell, value in zip(self._cells, self.values):
                     cell.label.text = value
-                    cell.draw()
+                    cell.draw(screen)
                 self.on_hover(pos)
                 
                 self._draw_multiselect_crosses()
@@ -679,7 +803,7 @@ class ComboBox(DraggableRect):
             if index!=0: #not hover over selected item
                 pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
                 self._cells[index-1].label.color=self.hover_label_color
-                self._cells[index-1].label.draw()
+                self._cells[index-1].label.draw(screen)
                 self._cells[index-1].label.color=(0,0,0)
                 
     def _draw_multiselect_crosses(self):
@@ -836,7 +960,7 @@ def main_program_loop(pgwidgets,table1):
                 elif event.type == pygame.MOUSEMOTION:
                     """
                     for i,rect in enumerate(rects):
-                        if selected==i and rect.draggable:
+                        if selected==i and rect.is_draggable:
                             rect.x = event.pos[0] + offset_x
                             rect.y = event.pos[1] + offset_y
                     """
