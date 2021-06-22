@@ -333,6 +333,10 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
             if pos[1]>self.pos[1]+self.size[1]-15: #upper arrow
                 self.scrollbar_handle.pos[1]+=5
                 
+    def on_unclick(self):
+        self.scrollbar_handle.on_unclick()
+        self.is_clicked=False
+                
     def on_drag(self,offset_pos_y):
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         ratio_position=self.calculate_handle_ratio_position()
@@ -358,6 +362,9 @@ class ScrollbarHandle(DraggableRect): #ImprovedDraggableRect
     
     def on_click(self):
         self.is_clicked=True
+        
+    def on_unclick(self):
+        self.is_clicked=False
         
 
 
@@ -387,7 +394,7 @@ class ScrollableComponent:
 
 
 class Table(ScrollableComponent):
-    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=0):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15):
         self.include_header=include_header
         self.pos=pos
         self.cell_size=cell_size
@@ -397,9 +404,11 @@ class Table(ScrollableComponent):
         self.frame_cell_color=frame_cell_color
         self.header_color=header_color
         self.col_width_dict=col_width_dict  #key=index of column, value=size_x in pixels
+        self.has_scrollbar=True
         
-        self.table_size=[(self.cell_size[0]+self.margin)*self.cols,(self.cell_size[1]+self.margin)*(self.rows+1)]
+        self.table_size=[(self.cell_size[0]+self.margin)*self.cols+int(self.has_scrollbar)*15,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
+        
         self.table_cells=[]
         self._init_col_width_dict() 
         self._initialize_cells()
@@ -423,7 +432,6 @@ class Table(ScrollableComponent):
     def _init_col_width_dict(self):
         for j in range(self.cols):
             if not j in self.col_width_dict.keys():
-                print("HELLO")
                 self.col_width_dict[j]=self.cell_size[0]
     
     def _initialize_cells(self):
@@ -544,6 +552,21 @@ class Table(ScrollableComponent):
                 cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
                     self.table_cells[cell_index].label.text=str(list1[i][j]) 
+                    
+    def on_click(self,pos):
+        self.which_cell_is_clicked(pos)
+        self.highlight_selected(pos)
+        if self.scrollbar.is_point_in_rectangle(pos):
+            self.scrollbar.on_click()
+            
+    def on_unclick(self):
+        self.scrollbar.on_unclick()
+            
+    def on_drag(self,offset_pos_y):
+        pos=pygame.mouse.get_pos()
+        if self.scrollbar.is_clicked:
+        
+            self.scrollbar.on_drag(offset_pos_y)
         
     
 
