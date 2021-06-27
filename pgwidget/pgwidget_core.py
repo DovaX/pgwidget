@@ -9,6 +9,8 @@ from multinherit.multinherit import multi_super
 
 from helper import c
 
+import datetime
+
 """TKINTER PART"""
 
 #import tkinter as tk
@@ -285,11 +287,18 @@ class Cell(DraggableRect):
         self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
     def draw(self,screen):
+        a=datetime.datetime.now()
         if not self.selected:
             super().draw(screen)
         else:
-            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])              
-        self.label.draw(screen)              
+            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+        
+        b=datetime.datetime.now()
+        print("CELL1",b-a)  
+        self.label.draw(screen)  
+
+        b=datetime.datetime.now()
+        print("CELL2",b-a)            
 
 
 class Scrollbar(DraggableRect): #ImprovedDraggableRect
@@ -392,7 +401,6 @@ class ScrollableComponent:
         
         
 
-
 class Table(ScrollableComponent):
     def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15):
         self.include_header=include_header
@@ -416,6 +424,8 @@ class Table(ScrollableComponent):
         self.df=None
         self.visibility_layer=100
         self.frame_border_width=frame_border_width   
+        self.camera_row_offset=0
+        self.camera_col_offset=0
         super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
         
     
@@ -449,10 +459,17 @@ class Table(ScrollableComponent):
             
                 
     def draw(self,screen):
+        a=datetime.datetime.now()
+        
         self.frame_cell.draw(screen)
         
         for i,cell in enumerate(self.table_cells):
+            b=datetime.datetime.now()
+            print("Cells",i,b-a)
+            
             cell.draw(screen)
+        b=datetime.datetime.now()
+        print("Y1",b-a)
         
         pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
@@ -462,9 +479,11 @@ class Table(ScrollableComponent):
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
-        
+        b=datetime.datetime.now()
+        print("Y2",b-a)
         super().draw(screen)
-        
+        b=datetime.datetime.now()
+        print("Y3",b-a)
         
           
     def draw_children(self):
@@ -509,49 +528,85 @@ class Table(ScrollableComponent):
         self.select_cell(selected_cell_index)
         
     def move_selected(self,direction):
+        a=datetime.datetime.now()
+        
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
             print(i,j)
             if direction==1:
-                target_cell_index=self.find_cell_index(i,j+1) #right
+                target_coordinates=(i,j+1) #right
             if direction==2:
-                target_cell_index=self.find_cell_index(i-1,j) #up
+                target_coordinates=(i-1,j) #up
             if direction==3:
-                target_cell_index=self.find_cell_index(i,j-1) #left
+                target_coordinates=(i,j-1) #left
             if direction==4:
-                target_cell_index=self.find_cell_index(i+1,j) #down
+                target_coordinates=(i+1,j) #down
+            target_cell_index=self.find_cell_index(*target_coordinates) 
             if target_cell_index is not None:
                 self.deselect_all_cells()
                 self.select_cell(target_cell_index)
             else:
-                self.move_camera(direction)
+                print("Move cam, branch")
+                self.move_camera(*target_coordinates)
+        b=datetime.datetime.now()
+        print("MOVE SELECTED",b-a)
     
-    def move_camera(self,direction):
-        pass
+    def show_data_subset(self,df,row_index=0,col_index=0):
+        a=datetime.datetime.now()
+        
+        subset_df=df.iloc[row_index:(row_index+self.rows),col_index:(col_index+self.cols)]
+        b=datetime.datetime.now()
+        print("SUBSET",b-a)
+        return(subset_df)
+    
+    
+    def move_camera(self,target_row_index,target_col_index):
+        """moves if target cell [row,col] is not visible"""
+        self.camera_row_offset #0
+        self.camera_col_offset #0
+        self.rows #25
+        self.cols #16
+        print(target_row_index,self.rows)
+        if target_row_index>=self.rows+1: #+1 for header row
+            
+            print("Move cam, branch2")
+            self.camera_row_offset+=1
+            self.update_data(self.df)
+        
                 
                 
     def update_data(self,df, rows = None):
-        """data layer"""  
+        """data layer"""
+        a=datetime.datetime.now()
+        
         self.df=df
+        self.subset_df=self.show_data_subset(df,self.camera_row_offset,self.camera_col_offset)
         self.table_cells=[]
         self._initialize_cells()
         if rows is None:
-            rows = df.shape[0]
-        print("updatedata",self.df)
+            rows = self.subset_df.shape[0]
         
-        list1=df.values.tolist()
+        list1=self.subset_df.values.tolist()
         
-        column_names=df.columns
+        column_names=self.subset_df.columns
         i=0
+        b=datetime.datetime.now()
+        print(b-a)
         for j in range(len(column_names)):
             cell_index=self.find_cell_index(0,j)
             if cell_index is not None:
                 self.table_cells[cell_index].label.text=str(column_names[j])     
         for i in range(min(len(list1), rows)):
+            b=datetime.datetime.now()
+            print(i,b-a)
             for j in range(len(list1[i])):
                 cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
                     self.table_cells[cell_index].label.text=str(list1[i][j]) 
+                    
+        b=datetime.datetime.now()
+        print(b-a)
+        
                     
     def on_click(self,pos):
         self.which_cell_is_clicked(pos)
