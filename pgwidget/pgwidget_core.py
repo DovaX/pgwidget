@@ -287,19 +287,14 @@ class Cell(DraggableRect):
         self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
     def draw(self,screen):
-        a=datetime.datetime.now()
         if not self.selected:
             super().draw(screen)
         else:
             pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
         
-        b=datetime.datetime.now()
-        print("CELL1",b-a)  
         self.label.draw(screen)  
 
-        b=datetime.datetime.now()
-        print("CELL2",b-a)            
-
+        
 
 class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def __init__(self,pos,size,percentage=0.2):
@@ -459,17 +454,12 @@ class Table(ScrollableComponent):
             
                 
     def draw(self,screen):
-        a=datetime.datetime.now()
         
         self.frame_cell.draw(screen)
         
         for i,cell in enumerate(self.table_cells):
-            b=datetime.datetime.now()
-            print("Cells",i,b-a)
             
             cell.draw(screen)
-        b=datetime.datetime.now()
-        print("Y1",b-a)
         
         pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
@@ -479,11 +469,7 @@ class Table(ScrollableComponent):
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
-        b=datetime.datetime.now()
-        print("Y2",b-a)
         super().draw(screen)
-        b=datetime.datetime.now()
-        print("Y3",b-a)
         
           
     def draw_children(self):
