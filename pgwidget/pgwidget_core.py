@@ -491,6 +491,21 @@ class Table(ScrollableComponent):
         print("ROW",new_i,"COL",new_j)
         return(new_i,new_j)
         
+    def get_row_and_col_of_cell(self,cell):
+        """
+        Gets row and column indices counted from zero, 0,1,2,...
+        self.table_cells is ordered by columns (i.e. first column initialized first,...) - has impact on % and // functions
+        """
+        index=self.table_cells.index(cell)
+    
+        row_index=index%(self.rows+1)
+        col_index=index//(self.rows+1)
+        return(row_index,col_index)
+        
+        
+        
+        
+    
     def find_cell_index(self,row,col):
         for cell_index,cell in enumerate(self.table_cells):
             if str(cell.coor)==str([row,col]):
