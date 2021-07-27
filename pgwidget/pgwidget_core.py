@@ -189,6 +189,9 @@ class CollidableComponent:
     def is_collided(self,rects):
         for i in range(len(rects)):
             if rects[i]!=self:
+                
+                #print("collision")
+                #print(rects[i].pos,self.pos)
                 collision=False
                 if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]]):
                     collision=True
@@ -198,10 +201,22 @@ class CollidableComponent:
                     collision=True
                 if self.is_point_in_rectangle([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]+rects[i].size[1]]):
                     collision=True
+                if rects[i].is_point_in_rectangle([self.pos[0],self.pos[1]]):
+                    collision=True
+                if rects[i].is_point_in_rectangle([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
+                    collision=True
+                if rects[i].is_point_in_rectangle([self.pos[0],self.pos[1]]):
+                    collision=True
+                if rects[i].is_point_in_rectangle([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
+                    collision=True
+                    
+                    
                 if collision:
-                    self.collision_function()
+                    
+                    #print("collision function")
+                    self.collision_function(rects[i])
     
-    def collision_function(self):
+    def collision_function(self,target_rect):
         pass
         #self.dx+=0.1
         #self.dy+=0.1
@@ -252,7 +267,7 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         self.size=size
         self.color=color
         self.is_draggable=is_draggable
-        
+        self.is_dragged=False
         self.selected=False
         self.visible=True
         self.visibility_layer=100
