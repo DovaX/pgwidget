@@ -187,6 +187,7 @@ def refresh(pgwidgets):
          
 class CollidableComponent:
     def is_collided(self,rects):
+        is_collided_at_least_once=False
         for i in range(len(rects)):
             if rects[i]!=self:
                 
@@ -212,14 +213,19 @@ class CollidableComponent:
                     
                     
                 if collision:
-                    
+                    is_collided_at_least_once=True
                     #print("collision function")
                     self.collision_function(rects[i])
+                    
+        if not is_collided_at_least_once:
+            self.non_collision_function()
     
     def collision_function(self,target_rect):
         pass
-        #self.dx+=0.1
-        #self.dy+=0.1
+    
+    def non_collision_function(self):
+        pass
+      
         
         
 class SelectableComponent:
@@ -463,7 +469,7 @@ class Table(ScrollableComponent):
             self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],self.header_color,coor=[i,j]))
             for i in range(1,self.rows+1):    
                 new_pos=[self.pos[0]+cumulative_x_pos+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
-                self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
+                self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],(255,255,255),coor=[i,j]))
             
             cumulative_x_pos+=self.col_width_dict[j]
             
