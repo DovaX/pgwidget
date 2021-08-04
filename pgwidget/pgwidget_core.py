@@ -13,16 +13,16 @@ import datetime
 
 """TKINTER PART"""
 
-#import tkinter as tk
+import tkinter as tk
 
 #from tkinter import LEFT
 
 
 
-"""
+
 root = tk.Tk()
 root.withdraw()
-
+"""
 
 WINDOW_SIZE=[1366,768]
 
@@ -66,7 +66,7 @@ screen=initialize_pg()
 
 """TKINTER PART"""
 
-
+"""
 def open_file(): 
     file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
     filename=""
@@ -122,14 +122,14 @@ from tkinter.filedialog import askopenfile,asksaveasfile
 
 #button1 = Button(buttonwin,text = 'Draw',  command=open_file)
 #button1.pack(side=LEFT)
-
-
-
-
-
 """
+
+
+
+
+
 root.update()
-"""
+    
 
 """TKINTER END PART"""
 
