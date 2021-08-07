@@ -39,7 +39,6 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 
 """TKINTER END PART"""
 
-
 def initialize_pg():
     global bg_color
     global color
@@ -415,36 +414,180 @@ class ScrollableComponent:
         self.scrollbar.on_drag(offset_pos_y)
         self.handle_offset=self.scrollbar.calculate_handle_offset()
         
-        
+  
 
-class Table(ScrollableComponent):
-    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15):
-        self.include_header=include_header
+class Grid(ScrollableComponent):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,frame_cell_color=(212,212,212),frame_border_width=2,scrollbar_horizontal_offset=-15):
         self.pos=pos
         self.cell_size=cell_size
         self.rows=rows
         self.cols=cols
         self.margin=margin
+        
+        self.table_cells=[]
         self.frame_cell_color=frame_cell_color
-        self.header_color=header_color
-        self.col_width_dict=col_width_dict  #key=index of column, value=size_x in pixels
+        self.frame_border_width=frame_border_width
         self.has_scrollbar=True
+        self.camera_row_offset=0
+        self.camera_col_offset=0
+        
         
         self.table_size=[(self.cell_size[0]+self.margin)*self.cols+int(self.has_scrollbar)*15,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
-        
-        self.table_cells=[]
-        self._init_col_width_dict() 
-        self._initialize_cells()
         self.selected_cell_index=None
-        self.df=None
-        self.visibility_layer=100
-        self.frame_border_width=frame_border_width   
-        self.camera_row_offset=0
-        self.camera_col_offset=0
+        if type(self)==Grid:
+            self._initialize_cells()
         super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
         
+        
     
+    
+    def _initialize_cells(self):
+        for j in range(self.cols):
+            i=0
+            for i in range(self.rows):    
+                new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
+                self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
+            
+ 
+    def is_point_in_rectangle(self,pos):
+        if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.table_size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.table_size[1]:
+            return(True)
+        else:
+            return(False)  
+        
+    def which_cell_is_clicked(self,pos):
+        max_coor=[x+y+z for x,y,z in zip(self.pos,self.table_size,[self.cols,self.rows])]
+        print(max_coor)
+        print(self.table_size)
+        new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin)
+        new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin)
+        print("ROW",new_i,"COL",new_j)
+        return(new_i,new_j)
+        
+    def get_row_and_col_of_cell(self,cell):
+        """
+        Gets row and column indices counted from zero, 0,1,2,...
+        self.table_cells is ordered by columns (i.e. first column initialized first,...) - has impact on % and // functions
+        """
+        index=self.table_cells.index(cell)
+    
+        row_index=index%(self.rows+1)
+        col_index=index//(self.rows+1)
+        return(row_index,col_index)
+        
+    def find_cell_index(self,row,col):
+        """Assumes rectangular shape of cells"""
+        index=row+col*self.rows
+        return(index)
+            
+    def deselect_all_cells(self):
+        for index,cell in enumerate(self.table_cells):
+            self.table_cells[index].selected=False #redundant at the moment
+            self.table_cells[index].label.selected=False
+    
+    def select_cell(self,selected_cell_index):
+        self.selected_cell_index=selected_cell_index
+        if self.selected_cell_index is not None:
+            self.table_cells[self.selected_cell_index].selected=True #redundant at the moment
+            self.table_cells[self.selected_cell_index].label.selected=True
+    
+    def highlight_selected(self,pos):
+        i,j=self.which_cell_is_clicked(pos)
+        selected_cell_index=self.find_cell_index(i,j)
+        self.deselect_all_cells()
+        self.select_cell(selected_cell_index)        
+ 
+    def move_selected(self,direction):
+        if self.selected_cell_index is not None:
+            i,j=self.table_cells[self.selected_cell_index].coor
+            print(i,j)
+            if direction==1:
+                target_coordinates=(i,j+1) #right
+            if direction==2:
+                target_coordinates=(i-1,j) #up
+            if direction==3:
+                target_coordinates=(i,j-1) #left
+            if direction==4:
+                target_coordinates=(i+1,j) #down
+            target_cell_index=self.find_cell_index(*target_coordinates) 
+            if target_cell_index is not None:
+                self.deselect_all_cells()
+                self.select_cell(target_cell_index)
+            else:
+                print("Move cam, branch")
+                self.move_camera(*target_coordinates)
+           
+ 
+        
+    def draw(self,screen):
+        
+        self.frame_cell.draw(screen)
+        
+        for i,cell in enumerate(self.table_cells):
+            
+            cell.draw(screen)
+        
+        pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
+        
+        #selected cell
+        if self.selected_cell_index is not None:
+            cell=self.table_cells[self.selected_cell_index]
+            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
+            pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
+            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
+        
+        
+        super().draw(screen)
+        
+   
+    
+   
+    def on_click(self,pos):
+        self.which_cell_is_clicked(pos)
+        self.highlight_selected(pos)
+        if self.scrollbar.is_point_in_rectangle(pos):
+            self.scrollbar.on_click()
+             
+    def on_unclick(self):
+        self.scrollbar.on_unclick()
+             
+    def on_drag(self,offset_pos_y):
+        pos=pygame.mouse.get_pos()
+        if self.scrollbar.is_clicked:
+         
+            self.scrollbar.on_drag(offset_pos_y) 
+   
+    def move_camera(self,target_row_index,target_col_index):
+        """moves if target cell [row,col] is not visible"""
+        self.camera_row_offset #0
+        self.camera_col_offset #0
+        self.rows #25
+        self.cols #16
+        print(target_row_index,self.rows)
+        if target_row_index>=self.rows+1: #+1 for header row
+            
+            print("Move cam, branch2")
+            self.camera_row_offset+=1
+            self.update_data(self.df)
+
+
+
+class Table(Grid):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15):
+        super().__init__(pos,cell_size,rows,cols,margin=margin,frame_cell_color=frame_cell_color,frame_border_width=frame_border_width,scrollbar_horizontal_offset=scrollbar_horizontal_offset)
+        self.include_header=include_header
+        
+        self.header_color=header_color
+        self.col_width_dict=col_width_dict  #key=index of column, value=size_x in pixels
+        
+        self._init_col_width_dict()
+        self._initialize_cells() #Overrides Grid
+        
+        self.df=None
+        self.visibility_layer=100
+        
+        
     """
     def _get_cell_size(self,col_index):
         if col_index in self.col_width_dict.keys():
@@ -454,13 +597,15 @@ class Table(ScrollableComponent):
         cell_size=(x_cell_size,self.cell_size[1])
         return(cell_size)
     """
-    
     def _init_col_width_dict(self):
         for j in range(self.cols):
             if not j in self.col_width_dict.keys():
                 self.col_width_dict[j]=self.cell_size[0]
+                
+       
     
     def _initialize_cells(self):
+        #Overrides Grid
         print(self.col_width_dict)
         cumulative_x_pos=0
         for j in range(self.cols):
@@ -490,88 +635,15 @@ class Table(ScrollableComponent):
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
-        super().draw(screen)
         
           
     def draw_children(self):
         pass
         
        
-    def is_point_in_rectangle(self,pos):
-        if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.table_size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.table_size[1]:
-            return(True)
-        else:
-            return(False)  
-        
-    def which_cell_is_clicked(self,pos):
-        max_coor=[x+y+z for x,y,z in zip(self.pos,self.table_size,[self.cols,self.rows])]
-        print(max_coor)
-        print(self.table_size)
-        new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin)
-        new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin)
-        print("ROW",new_i,"COL",new_j)
-        return(new_i,new_j)
-        
-    def get_row_and_col_of_cell(self,cell):
-        """
-        Gets row and column indices counted from zero, 0,1,2,...
-        self.table_cells is ordered by columns (i.e. first column initialized first,...) - has impact on % and // functions
-        """
-        index=self.table_cells.index(cell)
-    
-        row_index=index%(self.rows+1)
-        col_index=index//(self.rows+1)
-        return(row_index,col_index)
-        
-        
-        
+
         
     
-    def find_cell_index(self,row,col):
-        for cell_index,cell in enumerate(self.table_cells):
-            if str(cell.coor)==str([row,col]):
-                return(cell_index)
-            
-    def deselect_all_cells(self):
-        for index,cell in enumerate(self.table_cells):
-            self.table_cells[index].selected=False #redundant at the moment
-            self.table_cells[index].label.selected=False
-    
-    def select_cell(self,selected_cell_index):
-        self.selected_cell_index=selected_cell_index
-        if self.selected_cell_index is not None:
-            self.table_cells[self.selected_cell_index].selected=True #redundant at the moment
-            self.table_cells[self.selected_cell_index].label.selected=True
-    
-    def highlight_selected(self,pos):
-        i,j=self.which_cell_is_clicked(pos)
-        selected_cell_index=self.find_cell_index(i,j)
-        self.deselect_all_cells()
-        self.select_cell(selected_cell_index)
-        
-    def move_selected(self,direction):
-        a=datetime.datetime.now()
-        
-        if self.selected_cell_index is not None:
-            i,j=self.table_cells[self.selected_cell_index].coor
-            print(i,j)
-            if direction==1:
-                target_coordinates=(i,j+1) #right
-            if direction==2:
-                target_coordinates=(i-1,j) #up
-            if direction==3:
-                target_coordinates=(i,j-1) #left
-            if direction==4:
-                target_coordinates=(i+1,j) #down
-            target_cell_index=self.find_cell_index(*target_coordinates) 
-            if target_cell_index is not None:
-                self.deselect_all_cells()
-                self.select_cell(target_cell_index)
-            else:
-                print("Move cam, branch")
-                self.move_camera(*target_coordinates)
-        b=datetime.datetime.now()
-        print("MOVE SELECTED",b-a)
     
     def show_data_subset(self,df,row_index=0,col_index=0):
         a=datetime.datetime.now()
@@ -582,18 +654,7 @@ class Table(ScrollableComponent):
         return(subset_df)
     
     
-    def move_camera(self,target_row_index,target_col_index):
-        """moves if target cell [row,col] is not visible"""
-        self.camera_row_offset #0
-        self.camera_col_offset #0
-        self.rows #25
-        self.cols #16
-        print(target_row_index,self.rows)
-        if target_row_index>=self.rows+1: #+1 for header row
-            
-            print("Move cam, branch2")
-            self.camera_row_offset+=1
-            self.update_data(self.df)
+    
         
                 
                 
@@ -630,20 +691,7 @@ class Table(ScrollableComponent):
         print(b-a)
         
                     
-    def on_click(self,pos):
-        self.which_cell_is_clicked(pos)
-        self.highlight_selected(pos)
-        if self.scrollbar.is_point_in_rectangle(pos):
-            self.scrollbar.on_click()
-            
-    def on_unclick(self):
-        self.scrollbar.on_unclick()
-            
-    def on_drag(self,offset_pos_y):
-        pos=pygame.mouse.get_pos()
-        if self.scrollbar.is_clicked:
-        
-            self.scrollbar.on_drag(offset_pos_y)
+    
         
     
 
