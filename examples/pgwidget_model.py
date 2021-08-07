@@ -28,7 +28,7 @@ def click_button(pos):
 def click_table(pos):    
     for i,table in enumerate(tables.elements):
         print("table")
-        table.is_clicked(pos)
+        table.on_click(pos)
         table.which_cell_is_clicked(pos)
         table.highlight_selected(pos)
 
