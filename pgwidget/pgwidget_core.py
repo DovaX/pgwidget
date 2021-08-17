@@ -458,11 +458,8 @@ class Grid(ScrollableComponent):
         
     def which_cell_is_clicked(self,pos):
         max_coor=[x+y+z for x,y,z in zip(self.pos,self.table_size,[self.cols,self.rows])]
-        print(max_coor)
-        print(self.table_size)
         new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin)
         new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin)
-        print("ROW",new_i,"COL",new_j)
         return(new_i,new_j)
         
     def get_row_and_col_of_cell(self,cell):
@@ -478,7 +475,7 @@ class Grid(ScrollableComponent):
         
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
-        index=row+col*self.rows
+        index=row+col*self.rows #+1 for table
         return(index)
             
     def deselect_all_cells(self):
@@ -488,15 +485,21 @@ class Grid(ScrollableComponent):
     
     def select_cell(self,selected_cell_index):
         self.selected_cell_index=selected_cell_index
+        is_outside_index=self.selected_cell_index>=len(self.table_cells)
+        if is_outside_index:
+            self.selected_cell_index=None #e.g. clicking on scrollbar (index out of table)
+
         if self.selected_cell_index is not None:
             self.table_cells[self.selected_cell_index].selected=True #redundant at the moment
             self.table_cells[self.selected_cell_index].label.selected=True
     
     def highlight_selected(self,pos):
-        i,j=self.which_cell_is_clicked(pos)
-        selected_cell_index=self.find_cell_index(i,j)
-        self.deselect_all_cells()
-        self.select_cell(selected_cell_index)        
+        if self.is_point_in_rectangle(pos):
+            i,j=self.which_cell_is_clicked(pos)
+            print("HIGHLIGHT",i,j)
+            selected_cell_index=self.find_cell_index(i,j)
+            self.deselect_all_cells()
+            self.select_cell(selected_cell_index)        
  
     def move_selected(self,direction):
         if self.selected_cell_index is not None:
@@ -531,6 +534,7 @@ class Grid(ScrollableComponent):
         pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
         #selected cell
+        
         if self.selected_cell_index is not None:
             cell=self.table_cells[self.selected_cell_index]
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
@@ -544,11 +548,12 @@ class Grid(ScrollableComponent):
     
    
     def on_click(self,pos):
-        self.which_cell_is_clicked(pos)
-        self.highlight_selected(pos)
-        if self.scrollbar.is_point_in_rectangle(pos):
-            self.scrollbar.on_click()
-             
+        if self.is_point_in_rectangle(pos):
+            self.which_cell_is_clicked(pos)
+            self.highlight_selected(pos)
+            if self.scrollbar.is_point_in_rectangle(pos):
+                self.scrollbar.on_click()
+                 
     def on_unclick(self):
         self.scrollbar.on_unclick()
              
@@ -587,7 +592,12 @@ class Table(Grid):
         self.df=None
         self.visibility_layer=100
         
+     
         
+    def find_cell_index(self,row,col):
+        """Assumes rectangular shape of cells"""
+        index=row+col*(self.rows+1) #overrides Grid definition
+        return(index)
     """
     def _get_cell_size(self,col_index):
         if col_index in self.col_width_dict.keys():
@@ -620,21 +630,8 @@ class Table(Grid):
             
                 
     def draw(self,screen):
+        super().draw(screen)
         
-        self.frame_cell.draw(screen)
-        
-        for i,cell in enumerate(self.table_cells):
-            
-            cell.draw(screen)
-        
-        pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
-        
-        #selected cell
-        if self.selected_cell_index is not None:
-            cell=self.table_cells[self.selected_cell_index]
-            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
-            pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
-            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
         
           
     def draw_children(self):
