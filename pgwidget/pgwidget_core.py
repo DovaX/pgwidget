@@ -22,7 +22,10 @@ import tkinter as tk
 
 root = tk.Tk()
 root.withdraw()
+
+
 """
+
 
 WINDOW_SIZE=[1366,768]
 
@@ -306,6 +309,14 @@ class Cell(DraggableRect):
         self.coor=coor
         self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
+    @property
+    def text(self):
+        return(self.label.text)
+    
+    @text.setter
+    def text(self,text):
+        self.label.text=text
+        
     def draw(self,screen):
         if not self.selected:
             super().draw(screen)
@@ -915,6 +926,12 @@ class ComboBox(DraggableRect):
             #self.cell.label.relative_pos[0]=self.cell.label.relative_pos[0]+2#2 pixels from border
             #self.cell.label.relative_pos[1]=self.cell.label.relative_pos[1]+2
         #TODO elif - create empty Cell
+        
+    @property
+    def chosen_cell(self):
+        return(self.cell)
+    
+            
 
     def draw(self,screen):
         if self.visible:
@@ -1164,13 +1181,13 @@ def main_program_loop(pgwidgets,table1):
                 pygame.event.pump()
                 keys = pygame.key.get_pressed()
                 
-            """    
+                
             try: #Handling tkinter and pygame loops
                 root.update()
             except tk.TclError as e:
                 sys.exit(0)
                 print(e)
-            """
+            
                 
             pygame.display.flip()   
     
