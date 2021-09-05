@@ -507,7 +507,6 @@ class Grid(ScrollableComponent):
     def highlight_selected(self,pos):
         if self.is_point_in_rectangle(pos):
             i,j=self.which_cell_is_clicked(pos)
-            print("HIGHLIGHT",i,j)
             selected_cell_index=self.find_cell_index(i,j)
             self.deselect_all_cells()
             self.select_cell(selected_cell_index)        
@@ -961,7 +960,6 @@ class ComboBox(DraggableRect):
             y=pos[1]-self.pos[1]
             option_height=self.size[1]
             index=y//option_height #0 - selected item
-            print("HOVERING",y,index)   
             if index!=0: #not hover over selected item
                 pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
                 self._cells[index-1].label.color=self.hover_label_color
@@ -989,15 +987,15 @@ class ComboBox(DraggableRect):
                 return(False)  
                     
     def on_click(self):
-        pos=pygame.mouse.get_pos()        
-        if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
-            self.choose(pos)
+        pos=pygame.mouse.get_pos()
+        if self.visible:        
+            if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
+                self.choose(pos)
+                
+            elif not self._is_rolled and self.is_point_in_rectangle(pos):
+                self.roll()
+                
             
-        elif not self._is_rolled and self.is_point_in_rectangle(pos):
-            self.roll()
-            
-        
-        #self.choose(pos)
 
     def roll(self):
         if not self._is_rolled: 
