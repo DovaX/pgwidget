@@ -242,11 +242,24 @@ class SelectableComponent:
             if self.is_drawing_selection_frame:    
                 pygame.draw.rect(screen,c.red,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
     
-    def on_click(self):    
+    def on_click(self,*args):    
         #show
+        
+        
         self.visible=True
         self.selection_count+=1
-        self.item_detail_form.on_click()
+        
+        print(self)
+        if len(args)>0:
+            glc=args[0]
+            print(glc)
+            try:
+                self.item_detail_form.on_click(glc)
+            except TypeError as e:
+                print("ERROR",e)
+                self.item_detail_form.on_click()
+        else:
+            self.item_detail_form.on_click()
         
      
         if len(self.function_args)>0:
@@ -451,6 +464,10 @@ class Grid(ScrollableComponent):
         super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
         
         
+        
+        
+
+    
     
     
     def _initialize_cells(self):
@@ -490,11 +507,16 @@ class Grid(ScrollableComponent):
         return(index)
             
     def deselect_all_cells(self):
+        print("DESELECTING")
         for index,cell in enumerate(self.table_cells):
             self.table_cells[index].selected=False #redundant at the moment
             self.table_cells[index].label.selected=False
+          
+        self.selected_cell_index=None
+            
     
     def select_cell(self,selected_cell_index):
+        print("SELECT CELL",selected_cell_index)
         self.selected_cell_index=selected_cell_index
         is_outside_index=self.selected_cell_index>=len(self.table_cells)
         if is_outside_index:
@@ -503,6 +525,7 @@ class Grid(ScrollableComponent):
         if self.selected_cell_index is not None:
             self.table_cells[self.selected_cell_index].selected=True #redundant at the moment
             self.table_cells[self.selected_cell_index].label.selected=True
+            
     
     def highlight_selected(self,pos):
         if self.is_point_in_rectangle(pos):
@@ -603,6 +626,7 @@ class Table(Grid):
         self.visibility_layer=100
         
      
+    
         
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
@@ -934,6 +958,7 @@ class ComboBox(DraggableRect):
 
     def draw(self,screen):
         if self.visible:
+            
             self._update_cells_positions()
             if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
@@ -944,6 +969,7 @@ class ComboBox(DraggableRect):
                 #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
             if self._is_rolled:
+                print("ROLLED",self.visible,self._is_rolled)
                 pos=pygame.mouse.get_pos()
                 for cell, value in zip(self._cells, self.values):
                     cell.label.text = value
@@ -988,13 +1014,17 @@ class ComboBox(DraggableRect):
                     
     def on_click(self):
         pos=pygame.mouse.get_pos()
-        if self.visible:        
-            if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
-                self.choose(pos)
-                
-            elif not self._is_rolled and self.is_point_in_rectangle(pos):
-                self.roll()
-                
+        #if self.visible:   
+            
+            
+        print("ROLLER",self._is_rolled)
+        print("ROLLERRectangle",self.is_point_in_rectangle(pos))
+        if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
+            self.choose(pos)
+            
+        elif not self._is_rolled and self.is_point_in_rectangle(pos):
+            self.roll()
+            
             
 
     def roll(self):
