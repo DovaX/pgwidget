@@ -249,18 +249,6 @@ class SelectableComponent:
         self.visible=True
         self.selection_count+=1
         
-        print(self)
-        if len(args)>0:
-            glc=args[0]
-            print(glc)
-            try:
-                self.item_detail_form.on_click(glc)
-            except TypeError as e:
-                print("ERROR",e)
-                self.item_detail_form.on_click()
-        else:
-            self.item_detail_form.on_click()
-        
      
         if len(self.function_args)>0:
             self.function(self.function_args)
@@ -954,7 +942,6 @@ class ComboBox(DraggableRect):
     def chosen_cell(self):
         return(self.cell)
     
-            
 
     def draw(self,screen):
         if self.visible:
