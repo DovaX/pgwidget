@@ -15,6 +15,7 @@ import datetime
 
 import tkinter as tk
 
+import abc
 #from tkinter import LEFT
 
 
@@ -187,7 +188,7 @@ def refresh(pgwidgets):
 
  
          
-class CollidableComponent:
+class CollidableComponent(abc.ABC):    
     def is_collided(self,rects):
         is_collided_at_least_once=False
         for i in range(len(rects)):
@@ -230,12 +231,14 @@ class CollidableComponent:
       
         
         
-class SelectableComponent:
+class SelectableComponent(abc.ABC):
+    @abc.abstractmethod
     def __init__(self):
         self.selection_count=0
         self.function=lambda *x:None
         self.function_args=[]
         self.is_drawing_selection_frame=True
+        
         
     def draw_selection_frame(self,screen):
         if self.selection_count>0:
@@ -244,8 +247,6 @@ class SelectableComponent:
     
     def on_click(self,*args):    
         #show
-        
-        
         self.visible=True
         self.selection_count+=1
         
@@ -257,9 +258,11 @@ class SelectableComponent:
             
     
    
-class ComponentContainingLabels:
+class ComponentContainingLabels(abc.ABC):
+    @abc.abstractmethod
     def __init__(self):
         self.labels=[]
+        
         
     def draw_labels(self,screen):
         for i,label in enumerate(self.labels):
@@ -720,14 +723,31 @@ class ButtonImage(DraggableRect):
         self.pos=pos
         self.size=size
         self.img=img
+        
         self.rescale()
         self.function=function
+        self.animation_index=0
+        self.animation_drawings_per_frame=5
+        self.animation_drawings_index=0
     
     def rescale(self):
-        self.img=pygame.transform.smoothscale(self.img, (self.size[0], self.size[1]))
+        if type(self.img)!=list: #animation
+            self.img=pygame.transform.smoothscale(self.img, (self.size[0], self.size[1]))
                 
     def draw(self,screen):   
-        screen.blit(self.img,self.pos)
+        if type(self.img)==list: #animation
+            screen.blit(self.img[self.animation_index],self.pos)    
+            
+            self.animation_drawings_index+=1
+            self.animation_drawings_index%=self.animation_drawings_per_frame
+            
+            if self.animation_drawings_index==0:
+                self.animation_index+=1
+                self.animation_index%=len(self.img)
+            
+            
+        else: #static img
+            screen.blit(self.img,self.pos)
         
     def run_function(self):
         self.function()
