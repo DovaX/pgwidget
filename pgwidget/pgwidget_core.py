@@ -962,6 +962,24 @@ class ComboBox(DraggableRect):
     def chosen_cell(self):
         return(self.cell)
     
+    
+    @chosen_cell.setter
+    def chosen_cell(self,chosen_cell):
+        index=self._cells.index(chosen_cell)
+        self.choose_by_index(index)
+        self.cell=chosen_cell    
+    
+    
+    
+    def choose_cell_by_string(self,string):
+        chosen_index=None
+        for i,x in enumerate(self._cells):
+            if x==string:
+                chosen_index=i
+        if chosen_index is not None:        
+            self.choose_by_index(chosen_index)
+        
+    
 
     def draw(self,screen):
         if self.visible:
@@ -1046,8 +1064,7 @@ class ComboBox(DraggableRect):
         self.function(self.function_args)
     
     
-    def choose(self, pos):
-        index = abs((pos[1] - self.pos[1]) // self.size[1])
+    def choose_by_index(self,index):
         if self.multiselect_indices is None:
             if index == 0:
                 self.roll()
@@ -1063,6 +1080,11 @@ class ComboBox(DraggableRect):
                 self.multiselect_indices[index]=next_multiselect_value
             elif index<=len(self.values):
                 self.multiselect_indices[index]=self.multiselect_values[0]
+    
+    
+    def choose(self, pos):
+        index = abs((pos[1] - self.pos[1]) // self.size[1])
+        self.choose_by_index(index)
 
     def _get_next_multiselect_value(self,value):
         index=self.multiselect_values.index(value)
