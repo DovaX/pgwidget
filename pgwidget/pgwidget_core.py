@@ -27,7 +27,6 @@ root.withdraw()
 
 """
 
-
 WINDOW_SIZE=[1366,768]
 
 embed = tk.Frame(root, width = WINDOW_SIZE[0], height = WINDOW_SIZE[1]) #creates embed frame for pygame window
@@ -498,7 +497,7 @@ class Grid(ScrollableComponent):
         return(index)
             
     def deselect_all_cells(self):
-        print("DESELECTING")
+        #print("DESELECTING")
         for index,cell in enumerate(self.table_cells):
             self.table_cells[index].selected=False #redundant at the moment
             self.table_cells[index].label.selected=False
@@ -507,7 +506,7 @@ class Grid(ScrollableComponent):
             
     
     def select_cell(self,selected_cell_index):
-        print("SELECT CELL",selected_cell_index)
+        #print("SELECT CELL",selected_cell_index)
         self.selected_cell_index=selected_cell_index
         is_outside_index=self.selected_cell_index>=len(self.table_cells)
         if is_outside_index:
@@ -528,7 +527,7 @@ class Grid(ScrollableComponent):
     def move_selected(self,direction):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
-            print(i,j)
+            #print(i,j)
             if direction==1:
                 target_coordinates=(i,j+1) #right
             if direction==2:
@@ -593,10 +592,10 @@ class Grid(ScrollableComponent):
         self.camera_col_offset #0
         self.rows #25
         self.cols #16
-        print(target_row_index,self.rows)
+        #print(target_row_index,self.rows)
         if target_row_index>=self.rows+1: #+1 for header row
             
-            print("Move cam, branch2")
+            #print("Move cam, branch2")
             self.camera_row_offset+=1
             self.update_data(self.df)
 
@@ -641,7 +640,7 @@ class Table(Grid):
     
     def _initialize_cells(self):
         #Overrides Grid
-        print(self.col_width_dict)
+        #print(self.col_width_dict)
         cumulative_x_pos=0
         for j in range(self.cols):
             i=0
@@ -668,11 +667,11 @@ class Table(Grid):
     
     
     def show_data_subset(self,df,row_index=0,col_index=0):
-        a=datetime.datetime.now()
+        #a=datetime.datetime.now()
         
         subset_df=df.iloc[row_index:(row_index+self.rows),col_index:(col_index+self.cols)]
-        b=datetime.datetime.now()
-        print("SUBSET",b-a)
+        #b=datetime.datetime.now()
+        #print("SUBSET",b-a)
         return(subset_df)
     
     
@@ -682,7 +681,7 @@ class Table(Grid):
                 
     def update_data(self,df, rows = None):
         """data layer"""
-        a=datetime.datetime.now()
+        #a=datetime.datetime.now()
         
         self.df=df
         self.subset_df=self.show_data_subset(df,self.camera_row_offset,self.camera_col_offset)
@@ -695,22 +694,22 @@ class Table(Grid):
         
         column_names=self.subset_df.columns
         i=0
-        b=datetime.datetime.now()
-        print(b-a)
+        #b=datetime.datetime.now()
+        #print(b-a)
         for j in range(len(column_names)):
             cell_index=self.find_cell_index(0,j)
             if cell_index is not None:
                 self.table_cells[cell_index].label.text=str(column_names[j])     
         for i in range(min(len(list1), rows)):
             b=datetime.datetime.now()
-            print(i,b-a)
+            #print(i,b-a)
             for j in range(len(list1[i])):
                 cell_index=self.find_cell_index(i+1,j) #skipping header -> +1
                 if cell_index is not None:
                     self.table_cells[cell_index].label.text=str(list1[i][j]) 
                     
-        b=datetime.datetime.now()
-        print(b-a)
+        #b=datetime.datetime.now()
+        #print(b-a)
         
                     
     
@@ -939,6 +938,7 @@ class ComboBox(DraggableRect):
         #self.text = text
         self.border_color = border_color
         self._cells = []
+        self._cells = self._get_option_cells()
         self._is_rolled = False
         self.visible=True
         self.function=lambda *x:None
@@ -973,8 +973,10 @@ class ComboBox(DraggableRect):
     
     def choose_cell_by_string(self,string):
         chosen_index=None
+        print("CHOOSE",self._cells)
         for i,x in enumerate(self._cells):
-            if x==string:
+            print(x,x.text,string)
+            if x.text==string:
                 chosen_index=i
         if chosen_index is not None:        
             self.choose_by_index(chosen_index)
@@ -994,7 +996,6 @@ class ComboBox(DraggableRect):
                 #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
             if self._is_rolled:
-                print("ROLLED",self.visible,self._is_rolled)
                 pos=pygame.mouse.get_pos()
                 for cell, value in zip(self._cells, self.values):
                     cell.label.text = value
@@ -1042,8 +1043,6 @@ class ComboBox(DraggableRect):
         #if self.visible:   
             
             
-        print("ROLLER",self._is_rolled)
-        print("ROLLERRectangle",self.is_point_in_rectangle(pos))
         if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
             self.choose(pos)
             
