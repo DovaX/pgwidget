@@ -138,7 +138,7 @@ root.update()
 
 class Label:
     def __init__(self,text,color,pos=[0,0],relative_pos=[0,0],font_type="Cambria",font_size=20,max_text_length=None,visible=True):
-        self.text=text
+        self._text=text
         self.color=color
         self.pos=pos
         self.max_text_length=max_text_length
@@ -150,27 +150,144 @@ class Label:
         self.selected=False #dbtable -> shows just beginning of string
         self.visible=visible
         self.visibility_layer=100
+        self.cursor_position=None
+        self._cursor_offset_index=None
+        self.is_cursor_drawing=True
+        self.shown_text=self.text
         
-    def draw(self,screen):       
-        self.shown_text=self.text    
+        
+    @property
+    def text(self):
+        return(self._text)
+        
+    @text.setter
+    def text(self,text):
+        self._text=text 
+        self.shown_text=self._text    
+    
+        self.text_length=self.myfont.size(self.shown_text)[0]
+        
         if self.max_text_length is not None:
-            #print(self.max_text_length,self.shown_text)
+            print(self.max_text_length,self.shown_text)
         
-            self.text_length=self.myfont.size(self.shown_text)[0]
             while self.text_length>self.max_text_length:
                 if self.selected:
                     self.shown_text=self.shown_text[1:]
                 else:
                     self.shown_text=self.shown_text[:-1]              
                 self.text_length=self.myfont.size(self.shown_text)[0]
+        
+    @property
+    def cursor_offset_index(self):
+        return(self._cursor_offset_index)
+    
+    @cursor_offset_index.setter
+    def cursor_offset_index(self,cursor_offset_index):
+        if cursor_offset_index is not None:
+            self._cursor_offset_index=max(cursor_offset_index,0)
+        else:
+            self._cursor_offset_index=None
+        self._recalculate_cursor_position() #TODO: add on_drag
+        
+        
+    def draw(self,screen):
+        
+        
+        #pygame.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
+        if self.is_cursor_drawing:
+            self._draw_cursor(screen)
+            
+            
+        
         if self.visible:
             try:
                 self.lbl=self.myfont.render(self.shown_text, True, self.color)
             except pygame.error as e:
+                print("Warning: Text has zero width:", e)
                 self.lbl = self.myfont.render("", True, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
             
+    
+    def _draw_cursor(self,screen):
+        if self.cursor_position is not None:
+            pygame.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
+            
+    
+    
+    
+    def is_point_in_rectangle(self,pos):
+        
+        self.text_length=self.myfont.size(self.shown_text)[0]
+        if pos[0]<self.pos[0]+self.text_length and self.pos[0]<pos[0] and pos[1]<self.pos[1]+16 and self.pos[1]<pos[1]:
+            return(True)
+        else:
+            return(False)
+    
+    def _round_to_nearer_bound(self,value,bound1,bound2):
+            """Example: bound1=21, bound2=28; 24.5 is the midpoint; if value greater or equal returns 28, else returns 21"""
+            avg=(bound1+bound2)/2
+            if value>=avg:
+                return(bound2)
+            else:
+                return(bound1)
+    
+    
+    def _get_text_pixel_length(self,letter_index):
+        text_length=self.myfont.size(self.shown_text[:letter_index])[0]
+        return(text_length)
+    
+    def _round_cursor_position_to_nearest_letter(self,pos):
+        x_offset=pos[0]-self.pos[0]
+        letter_index=0
+        text_length=0
+        while text_length<x_offset:
+            text_length=self._get_text_pixel_length(letter_index)
+            letter_index+=1
+        
+        letter_before_index=letter_index-2
+        text_before_length=self.myfont.size(self.shown_text[:letter_before_index])[0]
+        text_after_length=self.myfont.size(self.shown_text[:letter_before_index+1])[0]
+        cursor_x_offset=self._round_to_nearer_bound(x_offset,text_before_length,text_after_length)
 
+        if cursor_x_offset==text_before_length:
+            return(letter_before_index)
+        elif cursor_x_offset==text_after_length:
+            return(letter_before_index+1)
+        else:
+            return(None)
+    
+    def _recalculate_cursor_position(self):
+        if self.cursor_offset_index is not None:
+            text_length=self._get_text_pixel_length(self.cursor_offset_index)
+            self.cursor_position=[self.pos[0]+text_length-1,self.pos[1]]
+        else:
+            self.cursor_position=None
+    
+    def on_click(self):
+        self.visible = True
+        pos=pygame.mouse.get_pos()
+        if self.is_point_in_rectangle(pos):
+            self.cursor_offset_index=self._round_cursor_position_to_nearest_letter(pos)
+        else:
+            self.cursor_offset_index=None
+            
+            
+    def on_key_down(self,event):
+        if self.cursor_offset_index is not None:
+            print(self.shown_text,self)
+            if event.key == pygame.K_RIGHT:
+                self.cursor_offset_index=min(self.cursor_offset_index+1,len(self.shown_text))
+                
+            elif event.key == pygame.K_LEFT:    
+                self.cursor_offset_index=max(self.cursor_offset_index-1,0)
+                
+                
+    
+        
+            
+            
+    
+        
             
     def get_pixel_length(self):
         text_pixels=self.myfont.size(self.text)[0]
