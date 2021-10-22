@@ -168,8 +168,7 @@ class Label:
         self.text_length=self.myfont.size(self.shown_text)[0]
         
         if self.max_text_length is not None:
-            print(self.max_text_length,self.shown_text)
-        
+            
             while self.text_length>self.max_text_length:
                 if self.selected:
                     self.shown_text=self.shown_text[1:]
@@ -204,6 +203,10 @@ class Label:
                 self.lbl=self.myfont.render(self.shown_text, True, self.color)
             except pygame.error as e:
                 print("Warning: Text has zero width:", e)
+                self.lbl = self.myfont.render("", True, self.color)
+            except TypeError as e:
+                print("Warning: Text might not be unicode - hidden")
+                self.shown_text=""
                 self.lbl = self.myfont.render("", True, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
             
@@ -274,7 +277,6 @@ class Label:
             
     def on_key_down(self,event):
         if self.cursor_offset_index is not None:
-            print(self.shown_text,self)
             if event.key == pygame.K_RIGHT:
                 self.cursor_offset_index=min(self.cursor_offset_index+1,len(self.shown_text))
                 
@@ -1054,8 +1056,9 @@ class ComboBox(DraggableRect):
         self.values = values
         #self.text = text
         self.border_color = border_color
-        self._cells = []
-        self._cells = self._get_option_cells()
+        #self._cells = []
+        self._cells = self._init_option_cells()
+        
         self._is_rolled = False
         self.visible=True
         self.function=lambda *x:None
@@ -1068,12 +1071,16 @@ class ComboBox(DraggableRect):
         
         if text:
             self.cell = Cell(self.pos, self.size, self.color, coor=[0, 0],relative_pos=[2,2])
-            self.cell.label.text = text
+            self.cell.text = text
             #self.cell.label.pos[0]=self.cell.label.pos[0]+4#2 pixels from border
             #self.cell.label.pos[1]=self.cell.label.pos[1]+3
             #self.cell.label.relative_pos[0]=self.cell.label.relative_pos[0]+2#2 pixels from border
             #self.cell.label.relative_pos[1]=self.cell.label.relative_pos[1]+2
         #TODO elif - create empty Cell
+       
+        
+       
+     
         
     @property
     def chosen_cell(self):
@@ -1090,14 +1097,16 @@ class ComboBox(DraggableRect):
     
     def choose_cell_by_string(self,string):
         chosen_index=None
-        print("CHOOSE",self._cells)
+        #print("CHOOSE",self._cells)
+        #print("CHOOSE STRING",string)
         for i,x in enumerate(self._cells):
-            print(x,x.text,string)
+            #print(x,x.text,string)
             if x.text==string:
                 chosen_index=i
+                #print("CHOSEN_INDEX",i)
         if chosen_index is not None:        
-            self.choose_by_index(chosen_index)
-        
+            self.choose_by_index(chosen_index+1) #+1 for empty cell
+            self.roll()
     
 
     def draw(self,screen):
@@ -1115,7 +1124,7 @@ class ComboBox(DraggableRect):
             if self._is_rolled:
                 pos=pygame.mouse.get_pos()
                 for cell, value in zip(self._cells, self.values):
-                    cell.label.text = value
+                    cell.text = value
                     cell.draw(screen)
                 self.on_hover(pos)
                 
@@ -1170,7 +1179,7 @@ class ComboBox(DraggableRect):
 
     def roll(self):
         if not self._is_rolled: 
-            self._cells = self._get_option_cells()
+            self._cells = self._init_option_cells()
             self._dy = self.size[1] * (len(self.values) + 1)        
         else:
             self.run_function()
@@ -1181,12 +1190,13 @@ class ComboBox(DraggableRect):
     
     
     def choose_by_index(self,index):
+        """Accepts index where 0 is empty choice, 1 is first choice,..."""
+        
         if self.multiselect_indices is None:
             if index == 0:
                 self.roll()
             else:
-                self.cell.label.text = self.values[index - 1]
-                
+                self.cell.text = self.values[index - 1]
                 self.roll()
         else:
             if index == 0:
@@ -1210,10 +1220,12 @@ class ComboBox(DraggableRect):
             final_index=index+1
         return(self.multiselect_values[final_index])
 
-    def _get_option_cells(self):
+    def _init_option_cells(self):
         tmp = []
         for i in range(len(self.values)):
-            tmp.append(Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, self.color, coor=[0, i + 1]))
+            cell=Cell([self.pos[0], self.pos[1] + self.size[1] * (i + 1)], self.size, self.color, coor=[0, i + 1])
+            cell.text=self.values[i]
+            tmp.append(cell)
         return (tmp)
 
     def _update_cells_positions(self):
