@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     
 setuptools.setup(
     name='pgwidget',
-    version='0.2.10',
+    version='0.3.0',
     author='DovaX',
     author_email='dovax.ai@gmail.com',
     description='Widgets for pygame',
@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-          'pygame','pandas','multinherit'
+          'pygame','pandas','multinherit','doxyplot'
      ],
     python_requires='>=3.6',
 )

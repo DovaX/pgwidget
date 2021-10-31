@@ -20,6 +20,13 @@ import abc
 
 
 
+import doxyplot.doxyplot_core as dp
+
+
+
+
+
+
 
 root = tk.Tk()
 root.withdraw()
@@ -1237,134 +1244,437 @@ class ComboBox(DraggableRect):
             self._cells[i].label.pos=[self.pos[0], self.pos[1] + self.size[1] * (i + 1)]
 
 
+
+class PgwEntry(DraggableRect):
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False):
+        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame)
+        self._text=text
+        #self.text = text  # TODO: single source of truth? - for now workaround: _synchronize_label_text
+        self.labels = [Label(text, c.black)]
+        self.visible = True
+        self.is_child = False
+        self.relative_pos = relative_pos
+        self.forloop_temp_variable_rect = None
+        self.is_password=is_password
+
+    @property
+    def visible(self):
+        return(self._visible)
+
+    @visible.setter
+    def visible(self,visible):
+        if len(self.labels)>0:
+            self.labels[0].visible=visible
+        if hasattr(self,"forloop_temp_variable_rect"):
+            
+            if self.forloop_temp_variable_rect is not None:
+                self.forloop_temp_variable_rect.visible=visible
+                
+                
+        self._visible=visible
+        
+
+    @property
+    def text(self):
+        
+        self._asterisk_text="".join(len(self._text)*["*"])
+        return (self._text)
+
+    @text.setter
+    def text(self, text):
+        
+        #print("SETTER PASS",self.is_password,text)
+        
+        self._text = text
+        if self.is_password:
+            
+            self._asterisk_text="".join(len(self._text)*["*"])
+            self.labels[0].text = self._asterisk_text
+        else:
+            self.labels[0].text = text
+        
+
+        # Entry inherits draw method
+
+    """
+    def _synchronize_label_text(self):
+        "synchronizes self.label.text and self.text"
+        if self.labels[0].text != self.text:
+            self.labels[0].text = self.text
+    """
+
+    def draw(self, screen):
+        # self._synchronize_label_text()
+        super().draw(screen)
+        for i, label in enumerate(self.labels):
+            # print("Drawing",label.text)
+            # print("Drawing",label.shown_text)
+            label.draw(screen)
+
+    def on_click(self, glc):
+        # print("TRYING DESELECT")
+        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
+        # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        self.labels[0].on_click()
+        super().on_click(glc)
+        glc.text = self.text
+        glc.selected_entry = self
+        # print("ENTRY CLICKED",self,self.text,self.labels)
+        
+        
+
+
+
+
+
+
+class DoxyplotImage(DraggableRect,dp.Doxyplot):    
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
+        self.pos=pos
+        self.size=size
+        self.color=color
+
+
+
+
+
+
+
 class PgWidget:
     def __init__(self,click_element_function=lambda *args:None,drawable=True): #lambda ~ do nothing function
         self.drawable=drawable
         self.elements=[]
         self.click_element_function=click_element_function
+        print("Warning: PgWidget class will be deprecated in future versions")
+
+
+
+
+import inspect
+
+
+
+
+class TimeTrigger:
+    def __init__(self,frequency,function=lambda *x:None):
+        self.frequency=frequency
+        self.function=function
+
+
+class GuiTimeHandler:
+    def __init__(self,glc,geh):
+        self.glc=glc
+        self.geh=geh
+        self.t=0
+        self.time_triggers=[]
+       
+    def tick(self):
+        self.t=self.t+10
+        
+        
+        if self.t%50==0:
+            for i in range(len(self.geh.direction_list)):
+                if self.geh.direction_list[i]==1:
+                    self.glc.table1.move_selected(i+1) 
+        
+        if self.t%10==0:
+            self.glc.refresh(self.glc.screen)
+            """
+            for i,rect in enumerate(rects):
+                rect.is_collided()  
+            """
+        if self.t%1000==0:
+            print(self.t)
+            
+        for i,trigger in enumerate(self.time_triggers):
+            if self.t%trigger.frequency==0:
+                trigger.function()
+            
+        
+        
+        
+        pygame.time.wait(10)
+        
+        
+      
+
+
+
+
+class GuiEventHandler:
+    def __init__(self,glc):
+        self.glc=glc
+        self.direction_list=[0,0,0,0]
+        self.actively_selected_draggable_component=None
+    
+        
+    
+    def handle_left_click(self):
+        self.glc.text = ""  # on click remove all text
+        pos = pygame.mouse.get_pos()
+
+        for i, widget_type in enumerate(self.glc.pgwidgets):
+            widget_type.click_element_function(pos)
+
+        # Dynamic drawing of button,combo click
+        for i, widget_type in enumerate(self.glc.pgwidgets):
+            for j, widget in enumerate(widget_type.elements):
+
+                if widget.visible:
+                    if type(widget) == ComboBox:
+                        if widget._is_rolled and widget.pos[1] < pos[1] and pos[1] < widget.pos[1] + widget.size[1] * (
+                                len(widget.values) + 1):
+                            widget.choose(pos)
+                        elif not widget._is_rolled and widget.is_point_in_rectangle(pos):
+                            widget.choose(pos)
+                        else:
+                            pass
+
+                    elif type(widget) == Button:
+                        if widget.is_point_in_rectangle(pos):
+                            self.glc.pgwidgets[i].elements[j].is_clicked = True
+
+                    elif type(widget) == Table:
+                        if widget.is_point_in_rectangle(pos):
+                            self.actively_selected_draggable_component = widget
+
+        for i,element in enumerate(self.glc.rects+self.glc.entries+self.glc.tables):
+            if element.is_point_in_rectangle(pos):
+                print(element,"CLICKED")
+                #try:
+                element.on_click(self.glc)
+                #except:
+                #    element.on_click()
+
+
+    def handle_unclick(self):
+        pos = pygame.mouse.get_pos()
+                    
+                    
+        #Dynamic drawing of button click
+        for i,widget_type in enumerate(self.glc.pgwidgets):
+            for j,widget in enumerate(widget_type.elements):
+                if type(widget)==Button:
+                    self.glc.pgwidgets[i].elements[j].is_clicked=False
+        
+        selected = None
+        new_select_possible=True
+
+
+    def handle_key_down(self,event):
+        direction_list=[0,0,0,0]   
+        if event.key == pygame.K_RIGHT:  
+            direction_list[0]=1
+              
+        elif event.key == pygame.K_UP:
+            direction_list[1]=1
+            
+        elif event.key == pygame.K_LEFT:
+            direction_list[2]=1
+            
+        elif event.key == pygame.K_DOWN:
+            direction_list[3]=1
+          
+            
+        if event.key == pygame.K_RETURN:
+            try:
+                self.glc.table1.move_selected(4)
+            except AttributeError:
+                pass
+           
+        try:
+            text=self.glc.table1.table_cells[self.glc.table1.selected_cell_index].label.text 
+        except AttributeError:
+            text=""
+        
+        if event.key == pygame.K_BACKSPACE:
+            self.glc.erase_letter_from_text()
+            self.glc._propagate_glc_text_to_entries()
+            
+            
+        elif event.key == pygame.K_DELETE:
+            text = ""
+        else:
+            letter=event.unicode
+            self.glc.append_letter_to_text(letter)
+            
+        #self.glc.text=text
+        self.glc._propagate_glc_text_to_entries()
+        try:
+            self.glc.table1.table_cells[self.glc.table1.selected_cell_index].label.text=text
+        except AttributeError:
+            pass
+        
+        
+        
+   
+    def handle_key_up(self,event):
+        if event.key == pygame.K_RIGHT:  
+            self.direction_list[0]=0
+              
+        elif event.key == pygame.K_UP:
+            self.direction_list[1]=0
+            
+        elif event.key == pygame.K_LEFT:
+            self.direction_list[2]=0
+            
+        elif event.key == pygame.K_DOWN:
+            self.direction_list[3]=0
+   
     
 
 
 
+class GuiLayoutContext:
+    def __init__(self):
+        self.screen=initialize_pg()
+        self.labels=[]
+        self.entries=[]
+        self.rects=[]
+        self.pgwidgets=[]
+        self.tables=[]
+        self.table1=None
 
 
 
-def main_program_loop(pgwidgets,table1):
+    def refresh(self,screen):
+        
+
+        screen.fill(c.selected_background)
+        
+        pgw_widgets=[widget for widget_type in self.pgwidgets for widget in widget_type.elements] #fancy double list comprehension
+        
+        for i,shape in enumerate(pgw_widgets):
+            if shape.visible:
+                draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
+                if "screen" in draw_arguments:
+                    shape.draw(screen) #screen arg - most natural?
+                else:
+                    shape.draw()
+                
+
+        drawable_shapes=[]
+        drawable_shapes+=self.rects
+        drawable_shapes+=self.entries
+        drawable_shapes+=self.labels
+        drawable_shapes.sort(key=lambda shape:shape.visibility_layer)
+        
+        for i,shape in enumerate(drawable_shapes):
+            if shape.visible:
+                draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
+                if "glc" in draw_arguments:
+                    shape.draw(self) #glc arg
+                elif "screen" in draw_arguments:
+                    shape.draw(screen) #glc arg
+                else:
+                    shape.draw()
+                
+        for i,shape in enumerate(drawable_shapes):
+            if hasattr(shape,"is_drawing_children"):
+                if shape.is_drawing_children:
+                    shape.draw_children(self)
+                    
+        
+
+    def _propagate_glc_text_to_entries(self):
+        #myfont = pygame.font.SysFont("Calibri", 20)
+
+        try:
+            print(self.selected_entry, self.selected_entry.pos)
+        except:
+            pass
+        if self.selected_entry is not None:
+            if len(self.selected_entry.labels) > 0 and self.selected_entry.selection_count > 0:
+                self.selected_entry.text = self.text
+                #self.selected_entry.labels[0].text = self.text
+                
+                #try:
+                #    self.selected_entry.labels[0].lbl = myfont.render(self.text, 20, (0, 0, 0))
+                #except pygame.error as e:
+                #    print("Warning: Text has zero width:", e)  # do not remove (error with special chars)
+    
+    def append_letter_to_text(self,letter):
+        if self.selected_entry is not None:
+            split_index=self.selected_entry.labels[0].cursor_offset_index
+            if split_index is not None:
+                self.text = self.text[:split_index]+letter+self.text[split_index:]
+            else:
+                self.text += letter
+                
+            self._propagate_glc_text_to_entries() #must be here because otherwise it can't move cursor +1
+            if split_index is not None:
+                self.selected_entry.labels[0].cursor_offset_index+=1
+            else:
+                self.selected_entry.labels[0].cursor_offset_index=len(self.text)#1
+            
+        else:  
+            self.text += letter
+    
+    def erase_letter_from_text(self):
+        if self.selected_entry is not None:
+            split_index=self.selected_entry.labels[0].cursor_offset_index
+            if split_index is None:
+                split_index=len(self.text)
+            
+            if split_index>0: #dont erase if on position 0
+                self.text = self.text[:split_index-1]+self.text[split_index:]
+                self.selected_entry.labels[0].cursor_offset_index=split_index-1
+                
+        else:
+            self.text = self.text[:-1]
+
+
+
+
+
+
+
+
+def main_program_loop(glc,geh,gth):
+    """GuiLayoutContext,GuiEventHandler,GuiTimeHandler"""
     done=False
     t=0
     new_select_possible=True
-    direction_list=[0,0,0,0]
     selected=None
-
+    
+   
+                
     while not done:
-        try:   
+        try:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if new_select_possible: #Because of popping from the list
-                        pos = pygame.mouse.get_pos()
-                        
-                        
-                        """
-                        for i,rect in enumerate(rects):
-                            if pos[0]>rect.x and pos[0]<rect.x+rect.dx and pos[1]>rect.y and pos[1]<rect.y+rect.dy:
-                                selected=i
-                                offset_x = rect.x - event.pos[0]
-                                offset_y = rect.y - event.pos[1]
-                        """
-                        for i,widget_type in enumerate(pgwidgets):
-                            widget_type.click_element_function(pos)
-                            
-                        #Dynamic drawing of button,combo click
-                        for i,widget_type in enumerate(pgwidgets):
-                            for j,widget in enumerate(widget_type.elements):
-                                if type(widget)==Button:
-                                    if widget.is_point_in_rectangle(pos):
-                                        pgwidgets[i].elements[j].is_clicked=True
-                                        
-                                if type(widget)==ComboBox:
-                                    widget.on_click()
-                                    
-                            
-                        
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button==1: #Left button of mouse
+                    geh.handle_left_click()                                
                                 
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button==3: #Right button of mouse
+                    geh.handle_right_click(event)
+                             
                 elif event.type == pygame.MOUSEBUTTONUP:
-                    pos = pygame.mouse.get_pos()
+                    geh.handle_unclick()
+                                    
+                elif event.type == pygame.MOUSEMOTION:                
+                    for i,table in enumerate(glc.tables):
+                        if geh.actively_selected_draggable_component==table:
+                            geh.drag_table(table,event)
                     
-                    
-                    #Dynamic drawing of button click
-                    for i,widget_type in enumerate(pgwidgets):
-                        for j,widget in enumerate(widget_type.elements):
-                            if type(widget)==Button:
-                                pgwidgets[i].elements[j].is_clicked=False
-                        
-                        
-                    
-                    
-                    selected = None
-                    new_select_possible=True
-                elif event.type == pygame.MOUSEMOTION:
-                    """
-                    for i,rect in enumerate(rects):
-                        if selected==i and rect.is_draggable:
-                            rect.x = event.pos[0] + offset_x
-                            rect.y = event.pos[1] + offset_y
-                    """
-                    
-                    
-                
+                    for i,rect in enumerate(glc.rects+glc.entries):
+                        if geh.actively_selected_draggable_component==rect:
+                            geh.drag_rect(rect,event)
+                            
                 elif event.type == pygame.KEYDOWN:
-                    #if active:
-                    
-                    direction_list=[0,0,0,0]   
-                    if event.key == pygame.K_RIGHT:  
-                        direction_list[0]=1
-                          
-                    elif event.key == pygame.K_UP:
-                        direction_list[1]=1
-                        
-                    elif event.key == pygame.K_LEFT:
-                        direction_list[2]=1
-                        
-                    elif event.key == pygame.K_DOWN:
-                        direction_list[3]=1
-                      
-                        
-                    if event.key == pygame.K_RETURN:
-                        table1.move_selected(4)
-                       
-                    
-                    text=table1.table_cells[table1.selected_cell_index].label.text 
+                    geh.handle_key_down(event)
                     
                     
-                    if event.key == pygame.K_BACKSPACE:
-                        text = text[:-1]
-                        
-                        
-                    elif event.key == pygame.K_DELETE:
-                        text = ""
-                    else:
-                        text += event.unicode
-                    table1.table_cells[table1.selected_cell_index].label.text=text
-                    text=""
-                    
-                
                 elif event.type == pygame.KEYUP: 
-                    if event.key == pygame.K_RIGHT:  
-                        direction_list[0]=0
-                          
-                    elif event.key == pygame.K_UP:
-                        direction_list[1]=0
-                        
-                    elif event.key == pygame.K_LEFT:
-                        direction_list[2]=0
-                        
-                    elif event.key == pygame.K_DOWN:
-                        direction_list[3]=0
-                        
+                    geh.handle_key_up(event)
+            
+                elif event.type == pygame.QUIT:
+                    done = True
+            
                 pygame.event.pump()
                 keys = pygame.key.get_pressed()
+                    
                 
                 
             try: #Handling tkinter and pygame loops
@@ -1381,32 +1691,10 @@ def main_program_loop(pgwidgets,table1):
             pygame.quit()
             sys.exit(0)
     
-        t=t+10
-        if t%1000==0:
-            pass
-        
-        if t%5000==0:
-            pass
-        
-        
-        if t%50==0:
-            for i in range(len(direction_list)):
-                if direction_list[i]==1:
-                    table1.move_selected(i+1) 
-        
-        if t%10==0:
-            refresh(pgwidgets)
-            """
-            for i,rect in enumerate(rects):
-                rect.is_collided()  
-            """
-        if t%1000==0:
-            print(t)
-        pygame.time.wait(10)
-        
+        gth.tick()
       
     pygame.display.quit()
     pygame.quit()
     sys.exit(0)
 
-#main_program_loop()
+#main_program_loop(glc,geh)
