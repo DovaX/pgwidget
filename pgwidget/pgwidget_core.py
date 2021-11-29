@@ -1335,6 +1335,14 @@ class DoxyplotImage(DraggableRect,dp.Doxyplot):
         self.color=color
 
 
+    def plot(self):
+        pass
+    
+    
+    def draw(self):
+        pass
+
+
 
 
 
