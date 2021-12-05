@@ -49,13 +49,16 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 
 """TKINTER END PART"""
 
-def initialize_pg():
+def initialize_pg(is_resizable=True):
     global bg_color
     global color
     
     bg_color=(150,150,150) #tuple
     
-    screen = pygame.display.set_mode([1366,768])
+    if is_resizable:
+        screen = pygame.display.set_mode([1366,768],pygame.RESIZABLE)
+    else:
+        screen = pygame.display.set_mode([1366,768])
             
     pygame.init()
     pygame.display.set_caption("Forloop")
