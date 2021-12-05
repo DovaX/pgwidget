@@ -32,6 +32,9 @@ root = tk.Tk()
 root.withdraw()
 
 
+
+
+
 """
 
 WINDOW_SIZE=[1366,768]
@@ -493,12 +496,23 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=True
         
         pos=pygame.mouse.get_pos()
-        if self.calculate_handle_ratio_position()>0:
-            if pos[1]<self.pos[1]+15: #upper arrow
-                self.scrollbar_handle.pos[1]-=5
-        if self.calculate_handle_ratio_position()<1:
-            if pos[1]>self.pos[1]+self.size[1]-15: #upper arrow
-                self.scrollbar_handle.pos[1]+=5
+        
+        if pos[1]<self.pos[1]+15: #upper arrow
+            self.shift_scrollbar(-10)    
+        
+        if pos[1]>self.pos[1]+self.size[1]-15: #upper arrow
+            self.shift_scrollbar(10)
+            
+    def shift_scrollbar(self,pixel_offset):
+        print(pixel_offset)
+        self.scrollbar_handle.pos[1]+=pixel_offset
+        #check if valid move
+        if self.calculate_handle_ratio_position()<=1 and self.calculate_handle_ratio_position()>=0:
+            pass
+            #Valid
+        else:
+            self.scrollbar_handle.pos[1]-=pixel_offset #Revert back
+  
                 
     def on_unclick(self):
         self.scrollbar_handle.on_unclick()
@@ -507,6 +521,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def on_drag(self,offset_pos_y):
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         ratio_position=self.calculate_handle_ratio_position()
+        
         if ratio_position<0:
             self.scrollbar_handle.pos=[self.pos[0],self.pos[1]+15]
         elif ratio_position>1:
@@ -846,8 +861,8 @@ class Table(Grid):
     
 
 class ButtonImage(DraggableRect):
-    def __init__(self,pos,size,img,text="",function=lambda *args:None): #default: do nothing function
-        super().__init__(pos,size,(0,0,0),is_draggable=False)    
+    def __init__(self,pos,size,img,text="",function=lambda *args:None,draggable=False): #default: do nothing function
+        super().__init__(pos,size,(0,0,0),is_draggable=draggable)    
         self.pos=pos
         self.size=size
         self.img=img
@@ -1030,6 +1045,7 @@ class Button(DraggableRect):
         
         
     def draw(self,screen):
+        #print(self.label.color)
         if self.visible:
             if self.is_clicked:
                 pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
@@ -1039,12 +1055,15 @@ class Button(DraggableRect):
             self.label.draw(screen)
             
             pos=pygame.mouse.get_pos()
-            self.on_hover(pos)
+            self.on_hover(screen,pos)
     
-    def on_hover(self,pos):
+    def on_hover(self,screen,pos):
         if self.is_point_in_rectangle(pos):
             pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+            orig_label_color=self.label.color
+            self.label.color=self.hover_label_color
             self.label.draw(screen) 
+            self.label.color=orig_label_color
             
     def run_function(self,*args):
         if len(args)>0:
