@@ -1327,24 +1327,63 @@ class PgwEntry(DraggableRect):
         
 
 
+class CascadeMenu(Button):
+    def __init__(self,pos,size,text,color=(100,100,100),border_color=(0,0,0)):
+        super().__init__(pos,size,text,color=color,border_color=border_color)       
+
+
+    def draw(self):
+        super().draw(screen)
+
+
+"""
+import tkinter as tk
+
+def donothing():
+    pass
+
+
+root = tk.Tk()
+
+
+menubar = tk.Menu(root)
+filemenu = tk.Menu(menubar, tearoff=0)
+filemenu.add_command(label="New", command=donothing)
+filemenu.add_command(label="Open", command=donothing)
+filemenu.add_command(label="Save", command=donothing)
+filemenu.add_separator()
+filemenu.add_command(label="Exit", command=root.quit)
+menubar.add_cascade(label="File", menu=filemenu)
+
+helpmenu = tk.Menu(menubar, tearoff=0)
+helpmenu.add_command(label="Help Index", command=donothing)
+helpmenu.add_command(label="About...", command=donothing)
+menubar.add_cascade(label="Help", menu=helpmenu)
+
+"""
 
 
 
 
-class DoxyplotImage(DraggableRect,dp.Doxyplot):    
-    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
-        self.pos=pos
-        self.size=size
-        self.color=color
 
+
+class DoxyplotImage(ButtonImage,dp.Doxyplot):  
+    """Not used at the moment"""
+    def __init__(self,pos,size,img=None,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
+        multi_super(ButtonImage,self,pos=pos,size=size,img=img,draggable=True)
+        multi_super(dp.Doxyplot,self)
+        #self.selection_count=0
+        
 
     def plot(self):
         pass
     
     
-    def draw(self):
-        pass
-
+    def draw(self,screen):
+        pygame.draw.rect(screen,(100,200,100),self.pos+self.size,1)
+        super().draw(screen)
+        
+        
 
 
 
