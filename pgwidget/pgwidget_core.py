@@ -142,10 +142,8 @@ from tkinter.filedialog import askopenfile,asksaveasfile
 
 
 
-
 root.update()
     
-
 """TKINTER END PART"""
 
 
@@ -764,6 +762,8 @@ class Table(Grid):
         self.df=None
         self.visibility_layer=100
         
+        self.is_ready_for_updating_df_subset=True
+        
      
     
         
@@ -825,14 +825,32 @@ class Table(Grid):
     
     
     
-        
+    
+    def on_drag(self,offset_pos_y):
+        maximal_row_index_of_top_cell=max(len(self.df)-self.rows,0)
+        current_camera_offset=int(self.scrollbar.scrollbar_handle_ratio*maximal_row_index_of_top_cell)
+        super().on_drag(offset_pos_y)
+        if current_camera_offset!=int(self.scrollbar.scrollbar_handle_ratio*maximal_row_index_of_top_cell):    
+            self.is_ready_for_updating_df_subset=True
                 
+    
                 
     def update_data(self,df, rows = None):
         """data layer"""
-        #a=datetime.datetime.now()
         
         self.df=df
+        
+        
+        
+        """TODO: Maybe this could be refactored to not update the whole dataframe, just the view and save some computational power"""
+        maximal_row_index_of_top_cell=max(len(self.df)-self.rows,0)  #shouldnt be negative
+        normalized_scrollbar_handle_ratio=max(min(self.scrollbar.scrollbar_handle_ratio,1),0)
+        row_index_of_current_scrolled_cell=int(normalized_scrollbar_handle_ratio*maximal_row_index_of_top_cell)
+        self.camera_row_offset=row_index_of_current_scrolled_cell #integer index (how many rows is the table shifted downwards)
+        
+        
+        
+        
         self.subset_df=self.show_data_subset(df,self.camera_row_offset,self.camera_col_offset)
         self.table_cells=[]
         self._initialize_cells()
