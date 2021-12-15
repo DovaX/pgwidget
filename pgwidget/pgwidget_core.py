@@ -469,6 +469,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.percentage=percentage
         self.scrollbar_handle=ScrollbarHandle([pos[0],pos[1]+15],[size[0],(size[1]-30)],self.percentage)
         self.max_handle_offset=(1-self.percentage)*(size[1]-30)
+        self.scrollbar_handle_ratio=0
     
     def calculate_handle_offset(self): 
         offset=self.scrollbar_handle.pos[1]-self.pos[1]-15
@@ -478,7 +479,9 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         
     def calculate_handle_ratio_position(self):
         offset=self.calculate_handle_offset()
-        return(offset/self.max_handle_offset)
+        self.scrollbar_handle_ratio=offset/self.max_handle_offset
+        print(self.scrollbar_handle_ratio)
+        return(self.scrollbar_handle_ratio)
         
     def draw(self,screen):
         super().draw(screen)
@@ -519,12 +522,14 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=False
                 
     def on_drag(self,offset_pos_y):
-        self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
-        ratio_position=self.calculate_handle_ratio_position()
+        print(offset_pos_y,pygame.mouse.get_pos())
         
-        if ratio_position<0:
+        self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
+        self.calculate_handle_ratio_position()
+        
+        if self.scrollbar_handle_ratio<0:
             self.scrollbar_handle.pos=[self.pos[0],self.pos[1]+15]
-        elif ratio_position>1:
+        elif self.scrollbar_handle_ratio>1:
             self.scrollbar_handle.pos=[self.pos[0],self.pos[1]+self.size[1]-self.scrollbar_handle.size[1]-15]
             
         
@@ -562,17 +567,22 @@ class ScrollableComponent:
  
         
     def on_click(self):
+        print("Scrollable component on click")
         pos=pygame.mouse.get_pos()
         if self.scrollbar.is_point_in_rectangle(pos):
             self.scrollbar.on_click()
-        
-        
+            self.handle_offset = self.scrollbar.calculate_handle_offset()
+            
         
     def on_drag(self,offset_pos_y):
-        self.scrollbar.on_drag(offset_pos_y)
-        self.handle_offset=self.scrollbar.calculate_handle_offset()
+        pos=pygame.mouse.get_pos()
+        print("SCROLLABLE",pos,offset_pos_y)
+        if self.scrollbar.is_clicked: 
+            self.scrollbar.on_drag(offset_pos_y) 
+            self.handle_offset=self.scrollbar.calculate_handle_offset()
+       
         
-  
+        
 
 class Grid(ScrollableComponent):
     def __init__(self,pos,cell_size,rows,cols,margin=1,frame_cell_color=(212,212,212),frame_border_width=2,scrollbar_horizontal_offset=-15):
@@ -597,10 +607,6 @@ class Grid(ScrollableComponent):
             self._initialize_cells()
         super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
         
-        
-        
-        
-
     
     
     
@@ -724,11 +730,10 @@ class Grid(ScrollableComponent):
     def on_unclick(self):
         self.scrollbar.on_unclick()
              
-    def on_drag(self,offset_pos_y):
-        pos=pygame.mouse.get_pos()
-        if self.scrollbar.is_clicked:
-         
-            self.scrollbar.on_drag(offset_pos_y) 
+    #def on_drag(self,offset_pos_y):
+    #    pos=pygame.mouse.get_pos()
+    #    if self.scrollbar.is_clicked:    
+    #        self.scrollbar.on_drag(offset_pos_y) 
    
     def move_camera(self,target_row_index,target_col_index):
         """moves if target cell [row,col] is not visible"""
@@ -1380,9 +1385,6 @@ helpmenu.add_command(label="About...", command=donothing)
 menubar.add_cascade(label="Help", menu=helpmenu)
 
 """
-
-
-
 
 
 
