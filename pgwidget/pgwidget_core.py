@@ -53,6 +53,7 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 """TKINTER END PART"""
 
 def initialize_pg(is_resizable=True):
+    
     global bg_color
     global color
     
@@ -67,12 +68,14 @@ def initialize_pg(is_resizable=True):
     pygame.display.set_caption("Forloop")
     #clock=pygame.time.Clock()
     screen.fill(bg_color)
+    """
     try:
-        window_icon = pygame.image.load('png//start.png')
+        window_icon = pygame.image.load('png//click.png')
         pygame.display.set_icon(window_icon)
     except FileNotFoundError:
         print("Warning: Icon (icon.png) not found, skipped")
         pass
+    """
     color=(200,200,200)
     return(screen)
 
@@ -623,9 +626,8 @@ class Grid(ScrollableComponent):
             return(False)  
         
     def which_cell_is_clicked(self,pos):
-        max_coor=[x+y+z for x,y,z in zip(self.pos,self.table_size,[self.cols,self.rows])]
-        new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin)
-        new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin)
+        new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin) #col
+        new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin) #row
         return(new_i,new_j)
         
     def get_row_and_col_of_cell(self,cell):
@@ -656,9 +658,9 @@ class Grid(ScrollableComponent):
     def select_cell(self,selected_cell_index):
         #print("SELECT CELL",selected_cell_index)
         self.selected_cell_index=selected_cell_index
-        is_outside_index=self.selected_cell_index>=len(self.table_cells)
-        if is_outside_index:
-            self.selected_cell_index=None #e.g. clicking on scrollbar (index out of table)
+        #is_outside_index=self.selected_cell_index>=len(self.table_cells)
+        #if is_outside_index:
+        #    self.selected_cell_index=None #e.g. clicking on scrollbar (index out of table)
 
         if self.selected_cell_index is not None:
             self.table_cells[self.selected_cell_index].selected=True #redundant at the moment
@@ -764,12 +766,39 @@ class Table(Grid):
         
         self.is_ready_for_updating_df_subset=True
         
+        
+        
      
+    def which_cell_is_clicked(self,pos):
+        
+        
+        col_sizes=[0] #initialize first vertical line - splitting columns
+        for i in range(self.cols):
+            if i in list(self.col_width_dict.keys()):    
+                col_sizes.append(self.col_width_dict[i]+self.margin)
+            else:
+                col_sizes.append(self.cell_size[0]+self.margin)
+        
+        new_j=None #init
+        for j in range(len(col_sizes)):
+            
+            if pos[0]-self.pos[0]>=sum(col_sizes[:(j+1)]) and pos[0]-self.pos[0]<sum(col_sizes[:(j+2)]):
+                new_j=j
+                
+        
+        #new_j=(pos[0]-self.pos[0])//(self.cell_size[0]+self.margin) #col #OLD IMPLEMENTATION
+        new_i=(pos[1]-self.pos[1])//(self.cell_size[1]+self.margin) #row
+        return(new_i,new_j)
+    
+    
     
         
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
-        index=row+col*(self.rows+1) #overrides Grid definition
+        if row is not None and col is not None:    
+            index=row+col*(self.rows+1) #overrides Grid definition
+        else:
+            index=None
         return(index)
     """
     def _get_cell_size(self,col_index):
@@ -786,6 +815,7 @@ class Table(Grid):
                 self.col_width_dict[j]=self.cell_size[0]
                 
        
+
     
     def _initialize_cells(self):
         #Overrides Grid
@@ -827,7 +857,9 @@ class Table(Grid):
     
     
     def on_drag(self,offset_pos_y):
-        maximal_row_index_of_top_cell=max(len(self.df)-self.rows,0)
+        maximal_row_index_of_top_cell=0
+        if self.df is not None:
+            maximal_row_index_of_top_cell=max(len(self.df)-self.rows,0)
         current_camera_offset=int(self.scrollbar.scrollbar_handle_ratio*maximal_row_index_of_top_cell)
         super().on_drag(offset_pos_y)
         if current_camera_offset!=int(self.scrollbar.scrollbar_handle_ratio*maximal_row_index_of_top_cell):    
