@@ -151,7 +151,7 @@ root.update()
 
 
 class Label:
-    def __init__(self,text,color,pos=[0,0],relative_pos=[0,0],font_type="Cambria",font_size=20,max_text_length=None,visible=True):
+    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True):
         self._text=text
         self.color=color
         self.pos=pos
@@ -592,7 +592,7 @@ class Grid(ScrollableComponent):
         self.rows=rows
         self.cols=cols
         self.margin=margin
-        
+        self.visible=True
         self.table_cells=[]
         self.frame_cell_color=frame_cell_color
         self.frame_border_width=frame_border_width
@@ -704,6 +704,12 @@ class Grid(ScrollableComponent):
             
             cell.draw(screen)
         
+        for i,cell in enumerate(self.table_cells):
+            for j,label in enumerate(cell.labels):
+                label.draw(screen)
+        
+        
+        
         pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
         #selected cell
@@ -713,6 +719,7 @@ class Grid(ScrollableComponent):
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
             pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
+        
         
         
         super().draw(screen)
