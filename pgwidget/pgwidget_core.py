@@ -255,13 +255,19 @@ class Label:
     
     def _round_cursor_position_to_nearest_letter(self,pos):
         x_offset=pos[0]-self.pos[0]
-        letter_index=0
+        total_shown_text_length=self.myfont.size(self.shown_text)[0]
         text_length=0
-        while text_length<x_offset:
-            text_length=self._get_text_pixel_length(letter_index)
-            letter_index+=1
-        
-        letter_before_index=letter_index-2
+        print(text_length,total_shown_text_length)
+        if x_offset>total_shown_text_length:
+            letter_index=len(self.shown_text) #
+        else:
+            letter_index=0       
+            while text_length<x_offset:        
+                print(text_length,x_offset,total_shown_text_length)
+                text_length=self._get_text_pixel_length(letter_index)
+                letter_index+=1
+            letter_index-=1 # while loop loops incrementing 1 one more time than it should to check stop criterion - this is correction to reference right index in string
+        letter_before_index=letter_index-1
         text_before_length=self.myfont.size(self.shown_text[:letter_before_index])[0]
         text_after_length=self.myfont.size(self.shown_text[:letter_before_index+1])[0]
         cursor_x_offset=self._round_to_nearer_bound(x_offset,text_before_length,text_after_length)
@@ -280,10 +286,11 @@ class Label:
         else:
             self.cursor_position=None
     
-    def on_click(self):
+    def on_click(self,click_around_label_permitted=False):
+        """click_around_label_permitted ... when not clicked exactly on label, it still calculates cursor position"""
         self.visible = True
         pos=pygame.mouse.get_pos()
-        if self.is_point_in_rectangle(pos):
+        if self.is_point_in_rectangle(pos) or click_around_label_permitted:
             self.cursor_offset_index=self._round_cursor_position_to_nearest_letter(pos)
         else:
             self.cursor_offset_index=None
@@ -404,7 +411,7 @@ class ComponentContainingLabels(abc.ABC):
    
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
-    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True):
         multi_super(SelectableComponent,self)
         multi_super(ComponentContainingLabels,self)
         self.pos=pos
@@ -419,11 +426,13 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         self.frame_color=frame_color
         self.relative_pos=relative_pos
         self.has_frame=has_frame
+        self.fill_color=fill_color #Fills the 
          
     def draw(self,screen,auto_draw_labels=True): 
         #Warning: Image descendant does not inherit draw method
         if self.visible:
-            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
+            if self.fill_color:
+                pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
             
             if self.has_frame:
                 pygame.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
