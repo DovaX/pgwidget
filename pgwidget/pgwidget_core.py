@@ -249,8 +249,12 @@ class Label:
                 return(bound1)
     
     
-    def _get_text_pixel_length(self,letter_index):
-        text_length=self.myfont.size(self.shown_text[:letter_index])[0]
+    def get_text_pixel_length(self,letter_index=None):
+        """returns text_pixel_length on request"""
+        if letter_index is None:
+            text_length=self.myfont.size(self.shown_text)[0]
+        else:
+            text_length=self.myfont.size(self.shown_text[:letter_index])[0]
         return(text_length)
     
     def _round_cursor_position_to_nearest_letter(self,pos):
@@ -264,7 +268,7 @@ class Label:
             letter_index=0       
             while text_length<x_offset:        
                 print(text_length,x_offset,total_shown_text_length)
-                text_length=self._get_text_pixel_length(letter_index)
+                text_length=self.get_text_pixel_length(letter_index)
                 letter_index+=1
             letter_index-=1 # while loop loops incrementing 1 one more time than it should to check stop criterion - this is correction to reference right index in string
         letter_before_index=letter_index-1
@@ -281,7 +285,7 @@ class Label:
     
     def _recalculate_cursor_position(self):
         if self.cursor_offset_index is not None:
-            text_length=self._get_text_pixel_length(self.cursor_offset_index)
+            text_length=self.get_text_pixel_length(self.cursor_offset_index)
             self.cursor_position=[self.pos[0]+text_length-1,self.pos[1]]
         else:
             self.cursor_position=None
