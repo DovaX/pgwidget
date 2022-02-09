@@ -1220,7 +1220,7 @@ class ComboBox(DraggableRect):
             if hasattr(self, "cell"):
                 pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
                 self.cell.draw(screen)
-                pygame.draw.rect(screen,(0,0,0),self.cell.pos+self.cell.size,1)
+                pygame.draw.rect(screen,self.border_color,self.cell.pos+self.cell.size,1)
                 pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
                 pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
                 #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
@@ -1342,16 +1342,15 @@ class ComboBox(DraggableRect):
 
 
 
-class PgwEntry(DraggableRect):
+
+class Entry(DraggableRect):
     def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False):
-        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame)
-        self._text=text
-        #self.text = text  # TODO: single source of truth? - for now workaround: _synchronize_label_text
+        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame,relative_pos=relative_pos)
         self.labels = [Label(text, c.black)]
         self.visible = True
         self.is_child = False
         self.relative_pos = relative_pos
-        self.forloop_temp_variable_rect = None
+        #self.forloop_temp_variable_rect = None
         self.is_password=is_password
 
     @property
@@ -1362,14 +1361,11 @@ class PgwEntry(DraggableRect):
     def visible(self,visible):
         if len(self.labels)>0:
             self.labels[0].visible=visible
-        if hasattr(self,"forloop_temp_variable_rect"):
-            
-            if self.forloop_temp_variable_rect is not None:
-                self.forloop_temp_variable_rect.visible=visible
-                
+        #if hasattr(self,"forloop_temp_variable_rect"):
+        #    if self.forloop_temp_variable_rect is not None:
+        #        self.forloop_temp_variable_rect.visible=visible
                 
         self._visible=visible
-        
 
     @property
     def text(self):
@@ -1379,9 +1375,6 @@ class PgwEntry(DraggableRect):
 
     @text.setter
     def text(self, text):
-        
-        #print("SETTER PASS",self.is_password,text)
-        
         self._text = text
         if self.is_password:
             
@@ -1393,15 +1386,8 @@ class PgwEntry(DraggableRect):
 
         # Entry inherits draw method
 
-    """
-    def _synchronize_label_text(self):
-        "synchronizes self.label.text and self.text"
-        if self.labels[0].text != self.text:
-            self.labels[0].text = self.text
-    """
 
     def draw(self, screen):
-        # self._synchronize_label_text()
         super().draw(screen)
         for i, label in enumerate(self.labels):
             # print("Drawing",label.text)
@@ -1412,13 +1398,15 @@ class PgwEntry(DraggableRect):
         # print("TRYING DESELECT")
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
-        self.labels[0].on_click()
+        self.labels[0].on_click(click_around_label_permitted=True)
         super().on_click(glc)
         glc.text = self.text
         glc.selected_entry = self
         # print("ENTRY CLICKED",self,self.text,self.labels)
         
         
+
+    
 
 
 class CascadeMenu(Button):
