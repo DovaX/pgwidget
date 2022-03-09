@@ -365,6 +365,10 @@ class CollidableComponent(abc.ABC):
                     
         if not is_collided_at_least_once:
             self.non_collision_function()
+            
+        return(is_collided_at_least_once,rects[i])
+    
+    
     
     def collision_function(self,target_rect):
         pass
@@ -1405,6 +1409,10 @@ class Entry(DraggableRect):
         # print("ENTRY CLICKED",self,self.text,self.labels)
         
         
+
+
+
+
 
     
 
