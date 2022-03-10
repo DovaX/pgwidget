@@ -334,6 +334,7 @@ def refresh(pgwidgets):
 class CollidableComponent(abc.ABC):    
     def is_collided(self,rects):
         is_collided_at_least_once=False
+        collision_entry = None
         for i in range(len(rects)):
             if rects[i]!=self:
                 
@@ -360,13 +361,14 @@ class CollidableComponent(abc.ABC):
                     
                 if collision:
                     is_collided_at_least_once=True
+                    collision_entry = rects[i]
                     #print("collision function")
                     self.collision_function(rects[i])
                     
         if not is_collided_at_least_once:
             self.non_collision_function()
             
-        return(is_collided_at_least_once,rects[i])
+        return(is_collided_at_least_once,collision_entry)
     
     
     
