@@ -177,7 +177,10 @@ class Label:
     @text.setter
     def text(self,text):
         self._text=text 
-        self.shown_text=self._text    
+        if len(self._text)>100:
+            self.shown_text=self._text[:100]
+        else:
+            self.shown_text=self._text
     
         self.text_length=self.myfont.size(self.shown_text)[0]
         
@@ -1123,7 +1126,7 @@ class Button(DraggableRect):
         self.hover_color=hover_color
         self.hover_label_color=hover_label_color
         
-        
+
         
     def draw(self,screen):
         #print(self.label.color)
@@ -1387,6 +1390,7 @@ class Entry(DraggableRect):
             self._asterisk_text="".join(len(self._text)*["*"])
             self.labels[0].text = self._asterisk_text
         else:
+            
             self.labels[0].text = text
         
 
