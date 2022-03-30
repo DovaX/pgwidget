@@ -731,8 +731,8 @@ class Grid(ScrollableComponent):
                 label.draw(screen)
         
         
-        
-        pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
+        if self.frame_border_width!=-1:
+            pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
         #selected cell
         
