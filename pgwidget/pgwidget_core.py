@@ -151,24 +151,41 @@ root.update()
 
 
 class Label:
-    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True):
+    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000):
+        """
+        shown_text_max_length = 100 ... default because of rendering speed
+        """
         self._text=text
         self.color=color
         self.pos=pos
-        self.max_text_length=max_text_length
+        self.max_text_length=max_text_length #in pixels
         self.font_type=font_type
         self.font_size=font_size
         self.relative_pos=relative_pos
         self.myfont = pygame.font.SysFont(self.font_type, self.font_size)
         self.lbl=self.myfont.render(self.text, True, self.color)
-        self.selected=False #dbtable -> shows just beginning of string
         self.visible=visible
         self.visibility_layer=100
         self.cursor_position=None
         self._cursor_offset_index=None
         self.is_cursor_drawing=True
+        self.shown_text_index_offset=0 #how many letters is the shown text offset against original self.text
         self.shown_text=self.text
+        self.shown_text_max_length=shown_text_max_length # in letters
+        self.selected=False #must be initialized after shown_text_max_length
+        self.shown_cursor_offset_index=0
         
+        
+    @property
+    def selected(self):
+        return(self._selected)
+
+
+    @selected.setter
+    def selected(self,selected):
+        self._selected=selected
+        self.refresh_shown_text()
+    
         
     @property
     def text(self):
@@ -176,22 +193,10 @@ class Label:
         
     @text.setter
     def text(self,text):
-        self._text=text 
-        if len(self._text)>100:
-            self.shown_text=self._text[:100]
-        else:
-            self.shown_text=self._text
-    
-        self.text_length=self.myfont.size(self.shown_text)[0]
         
-        if self.max_text_length is not None:
-            
-            while self.text_length>self.max_text_length:
-                if self.selected:
-                    self.shown_text=self.shown_text[1:]
-                else:
-                    self.shown_text=self.shown_text[:-1]              
-                self.text_length=self.myfont.size(self.shown_text)[0]
+        self._text=text
+        self.refresh_shown_text()
+        self.shown_text_index_offset=len(self._text)-len(self.shown_text)
         
     @property
     def cursor_offset_index(self):
@@ -201,10 +206,30 @@ class Label:
     def cursor_offset_index(self,cursor_offset_index):
         if cursor_offset_index is not None:
             self._cursor_offset_index=max(cursor_offset_index,0)
+            
+            self.shown_cursor_offset_index=self._cursor_offset_index-self.shown_text_index_offset
         else:
             self._cursor_offset_index=None
         self._recalculate_cursor_position() #TODO: add on_drag
+     
+          
+     
         
+    def refresh_shown_text(self):
+        if len(self._text)>self.shown_text_max_length:
+            self.shown_text=self._text[:self.shown_text_max_length] #needs to be restricted before myfont.size calculation (which takes long)
+        else:
+            self.shown_text=self._text
+    
+        self.text_length=self.myfont.size(self.shown_text)[0]
+        if self.max_text_length is not None:
+            
+            while self.text_length>self.max_text_length:
+                if self.selected:
+                    self.shown_text=self.shown_text[1:]
+                else:
+                    self.shown_text=self.shown_text[:-1]  
+                self.text_length=self.myfont.size(self.shown_text)[0]
         
     def draw(self,screen):
         
@@ -287,8 +312,8 @@ class Label:
             return(None)
     
     def _recalculate_cursor_position(self):
-        if self.cursor_offset_index is not None:
-            text_length=self.get_text_pixel_length(self.cursor_offset_index)
+        if self.cursor_offset_index is not None: #i.e. if cursor exists (it is not correct to put here shown_cursor_offset_index)
+            text_length=self.get_text_pixel_length(self.shown_cursor_offset_index)
             self.cursor_position=[self.pos[0]+text_length-1,self.pos[1]]
         else:
             self.cursor_position=None
@@ -298,7 +323,9 @@ class Label:
         self.visible = True
         pos=pygame.mouse.get_pos()
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
-            self.cursor_offset_index=self._round_cursor_position_to_nearest_letter(pos)
+            self.shown_cursor_offset_index=self._round_cursor_position_to_nearest_letter(pos)
+            self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            
         else:
             self.cursor_offset_index=None
             
@@ -310,6 +337,8 @@ class Label:
                 
             elif event.key == pygame.K_LEFT:    
                 self.cursor_offset_index=max(self.cursor_offset_index-1,0)
+                
+    
                 
                 
     
@@ -1361,7 +1390,19 @@ class Entry(DraggableRect):
         self.relative_pos = relative_pos
         #self.forloop_temp_variable_rect = None
         self.is_password=is_password
-
+        
+        self.selected=False
+        
+    @property
+    def selected(self):
+        return(self._selected)
+    
+    @selected.setter
+    def selected(self,selected):
+        if len(self.labels)>0:
+            self.labels[0].selected=selected
+        self._selected=selected
+    
     @property
     def visible(self):
         return(self._visible)
@@ -1412,8 +1453,12 @@ class Entry(DraggableRect):
         super().on_click(glc)
         glc.text = self.text
         glc.selected_entry = self
+        self.selected=True
         # print("ENTRY CLICKED",self,self.text,self.labels)
         
+
+    def on_unclick(self, glc):
+        self.selected=False
         
 
 
