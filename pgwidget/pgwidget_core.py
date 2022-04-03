@@ -333,11 +333,15 @@ class Label:
     def on_key_down(self,event):
         if self.cursor_offset_index is not None:
             if event.key == pygame.K_RIGHT:
-                self.cursor_offset_index=min(self.cursor_offset_index+1,len(self.shown_text))
+                self.shown_cursor_offset_index=min(self.shown_cursor_offset_index+1,len(self.shown_text))
+                self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            
+                
                 
             elif event.key == pygame.K_LEFT:    
-                self.cursor_offset_index=max(self.cursor_offset_index-1,0)
-                
+                self.shown_cursor_offset_index=max(self.shown_cursor_offset_index-1,0)
+                self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            
     
                 
                 
