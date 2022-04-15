@@ -194,7 +194,7 @@ class Label:
     @text.setter
     def text(self,text):
         
-        self._text=text
+        self._text=str(text)
         self.refresh_shown_text()
         self.shown_text_index_offset=len(self._text)-len(self.shown_text)
         
@@ -1081,19 +1081,194 @@ class Checkbox(DraggableRect):
         else:
             screen.blit(self.img_empty,self.pos)
 
-class TextArea(DraggableRect):
-    def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255)):
-        super().__init__(pos,size,color,is_draggable=False)
+
+
+
+class TextContainerRect(DraggableRect,abc.ABC):
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0]):
+        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame,relative_pos=relative_pos)
+        self.labels = [Label(text, c.black)]
+        self.visible = True
+        self.is_child = False
+        self.relative_pos = relative_pos
+        self.selected=False
+    
+    @property
+    def selected(self):
+        return(self._selected)
+    
+    @selected.setter
+    def selected(self,selected):
+        if len(self.labels)>0:
+            self.labels[0].selected=selected
+        self._selected=selected
+    
+    @property
+    def visible(self):
+        return(self._visible)
+
+    @visible.setter
+    def visible(self,visible):
+        if len(self.labels)>0:
+            self.labels[0].visible=visible
+        #if hasattr(self,"forloop_temp_variable_rect"):
+        #    if self.forloop_temp_variable_rect is not None:
+        #        self.forloop_temp_variable_rect.visible=visible
+                
+        self._visible=visible
+
+    @property
+    def text(self):
+        
+        
+        return (self._text)
+
+    @text.setter
+    def text(self, text):
+        self._text = text
+        self.labels[0].text = text
+        
+
+        # Entry inherits draw method
+
+
+    def draw(self, screen):
+        super().draw(screen)
+        for i, label in enumerate(self.labels):
+            # print("Drawing",label.text)
+            # print("Drawing",label.shown_text)
+            label.draw(screen)
+
+    def on_click(self, glc):
+        # print("TRYING DESELECT")
+        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
+        # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        self.labels[0].on_click(click_around_label_permitted=True)
+        super().on_click(glc)
+        glc.text = self.text
+        glc.selected_entry = self
+        self.selected=True
+        # print("ENTRY CLICKED",self,self.text,self.labels)
+        
+
+    def on_unclick(self, glc):
+        self.selected=False
+        
+
+class Entry(TextContainerRect):
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False):
+        super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos)
+        
+        self.labels = [Label(text, c.black)]
+        self.is_child = False
+        self.relative_pos = relative_pos
+        self.is_password=is_password
+        
+    
+    @property
+    def text(self):        
+        self._asterisk_text="".join(len(self._text)*["*"])
+        return (self._text)
+
+    @text.setter
+    def text(self, text):
+        self._text = text
+        if self.is_password:   
+            self._asterisk_text="".join(len(self._text)*["*"])
+            self.labels[0].text = self._asterisk_text
+        else:
+            
+            self.labels[0].text = text
+        
+
+    def draw(self, screen):
+        super().draw(screen)
+        for i, label in enumerate(self.labels):
+            # print("Drawing",label.text)
+            # print("Drawing",label.shown_text)
+            label.draw(screen)
+
+    def on_click(self, glc):
+        # print("TRYING DESELECT")
+        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
+        # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        self.labels[0].on_click(click_around_label_permitted=True)
+        super().on_click(glc)
+        glc.text = self.text
+        glc.selected_entry = self
+        self.selected=True
+        # print("ENTRY CLICKED",self,self.text,self.labels)
+        
+
+
+
+
+
+
+
+
+class TextArea(TextContainerRect):
+    def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255),is_draggable=False,relative_pos=[0,0],editable_text=True):
+        super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos)
+        
+        #super().__init__(pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
         self.text=text
-        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
+        self.labels=[]
+        self.labels.append(Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1))
         self.border_color=border_color
         self.color=color
-        self.fit2label()
+        self.fit_text_to_textarea()
+        
+        self.visible = True
+        self.selected=False
+        
+        self.editable_text=editable_text
+       
+    @property
+    def text(self):
+        return (self._text)
+
+    @text.setter
+    def text(self, text):
+        self._text = text
+        self.labels[0].text = text 
+       
+    @property
+    def visible(self):
+        return(self._visible)
+
+    @visible.setter
+    def visible(self,visible):
+        if len(self.labels)>0:
+            self.labels[0].visible=visible
+        #if hasattr(self,"forloop_temp_variable_rect"):
+        #    if self.forloop_temp_variable_rect is not None:
+        #        self.forloop_temp_variable_rect.visible=visible
+                
+        self._visible=visible
+        
+    @property
+    def selected(self):
+        return(self._selected)
+    
+    @selected.setter
+    def selected(self,selected):
+        if len(self.labels)>0:
+            self.labels[0].selected=selected
+        self._selected=selected
+        
+    @property
+    def label(self):
+        return(self.labels[0])
+    
+    @label.setter
+    def label(self,label):
+        self.labels[0]=label
 
     def blit_text(self, surface, text, color=(0,0,0)):
-        words = [word.split(' ') for word in self.label.text.splitlines()]
+        words = [word.split(' ') for word in self.labels.text.splitlines()]
         space = self.label.myfont.size(' ')[0]
         max_height = self.size[1]-10
         x, y = self.label.pos
@@ -1122,7 +1297,7 @@ class TextArea(DraggableRect):
         self.label.draw = self.blit_text
         self.label.draw(screen, self.label.text)
 
-    def fit2label(self):
+    def fit_text_to_textarea(self):
         words = self.text.split()
         final_text = ""
         line = ""
@@ -1139,6 +1314,24 @@ class TextArea(DraggableRect):
         if line:
             final_text += line + "\n"
         self.label.text = final_text
+        
+        
+    def on_click(self, glc):
+        # print("TRYING DESELECT")
+        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
+        # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        self.labels[0].on_click(click_around_label_permitted=True)
+        super().on_click(glc)
+        glc.text = self.text
+        glc.selected_entry = self
+        self.selected=True
+        # print("ENTRY CLICKED",self,self.text,self.labels)
+        
+
+    def on_unclick(self, glc):
+        self.selected=False
+
+
 
 
 class Button(DraggableRect):
@@ -1381,91 +1574,6 @@ class ComboBox(DraggableRect):
         for i in range(len(self._cells)):
             self._cells[i].pos=[self.pos[0], self.pos[1] + self.size[1] * (i + 1)]
             self._cells[i].label.pos=[self.pos[0], self.pos[1] + self.size[1] * (i + 1)]
-
-
-
-
-class Entry(DraggableRect):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False):
-        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame,relative_pos=relative_pos)
-        self.labels = [Label(text, c.black)]
-        self.visible = True
-        self.is_child = False
-        self.relative_pos = relative_pos
-        #self.forloop_temp_variable_rect = None
-        self.is_password=is_password
-        
-        self.selected=False
-        
-    @property
-    def selected(self):
-        return(self._selected)
-    
-    @selected.setter
-    def selected(self,selected):
-        if len(self.labels)>0:
-            self.labels[0].selected=selected
-        self._selected=selected
-    
-    @property
-    def visible(self):
-        return(self._visible)
-
-    @visible.setter
-    def visible(self,visible):
-        if len(self.labels)>0:
-            self.labels[0].visible=visible
-        #if hasattr(self,"forloop_temp_variable_rect"):
-        #    if self.forloop_temp_variable_rect is not None:
-        #        self.forloop_temp_variable_rect.visible=visible
-                
-        self._visible=visible
-
-    @property
-    def text(self):
-        
-        self._asterisk_text="".join(len(self._text)*["*"])
-        return (self._text)
-
-    @text.setter
-    def text(self, text):
-        self._text = text
-        if self.is_password:
-            
-            self._asterisk_text="".join(len(self._text)*["*"])
-            self.labels[0].text = self._asterisk_text
-        else:
-            
-            self.labels[0].text = text
-        
-
-        # Entry inherits draw method
-
-
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
-
-    def on_click(self, glc):
-        # print("TRYING DESELECT")
-        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
-        # print("SELECTED_CELL",glc.table1.selected_cell_index)
-        self.labels[0].on_click(click_around_label_permitted=True)
-        super().on_click(glc)
-        glc.text = self.text
-        glc.selected_entry = self
-        self.selected=True
-        # print("ENTRY CLICKED",self,self.text,self.labels)
-        
-
-    def on_unclick(self, glc):
-        self.selected=False
-        
-
-
 
 
 
