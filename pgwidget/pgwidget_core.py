@@ -153,7 +153,7 @@ root.update()
 class Label:
     def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000):
         """
-        shown_text_max_length = 100 ... default because of rendering speed
+        shown_text_max_length = 1000 ... default because of rendering speed
         """
         self._text=text
         self.color=color
@@ -418,17 +418,18 @@ class CollidableComponent(abc.ABC):
         
 class SelectableComponent(abc.ABC):
     @abc.abstractmethod
-    def __init__(self):
+    def __init__(self,selection_color=c.red):
         self.selection_count=0
         self.function=lambda *x:None
         self.function_args=[]
         self.is_drawing_selection_frame=True
+        self.selection_color=selection_color
         
         
     def draw_selection_frame(self,screen):
         if self.selection_count>0:
             if self.is_drawing_selection_frame:    
-                pygame.draw.rect(screen,c.red,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+                pygame.draw.rect(screen,self.selection_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
     
     def on_click(self,*args):    
         #show
@@ -457,8 +458,8 @@ class ComponentContainingLabels(abc.ABC):
    
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
-    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True):
-        multi_super(SelectableComponent,self)
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red):
+        multi_super(SelectableComponent,self,selection_color=selection_color)
         multi_super(ComponentContainingLabels,self)
         self.pos=pos
         self.size=size
@@ -1085,8 +1086,8 @@ class Checkbox(DraggableRect):
 
 
 class TextContainerRect(DraggableRect,abc.ABC):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0]):
-        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame,relative_pos=relative_pos)
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],selection_color=c.red):
+        super().__init__(pos, size, color, is_draggable=is_draggable, frame_color=c.frame,relative_pos=relative_pos,selection_color=selection_color)
         self.labels = [Label(text, c.black)]
         self.visible = True
         self.is_child = False
@@ -1156,8 +1157,8 @@ class TextContainerRect(DraggableRect,abc.ABC):
         
 
 class Entry(TextContainerRect):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False):
-        super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos)
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False,selection_color=c.red):
+        super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
         
         self.labels = [Label(text, c.black)]
         self.is_child = False
