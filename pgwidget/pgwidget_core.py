@@ -1269,7 +1269,7 @@ class TextArea(TextContainerRect):
         self.labels[0]=label
 
     def blit_text(self, surface, text, color=(0,0,0)):
-        words = [word.split(' ') for word in self.labels.text.splitlines()]
+        words = [word.split(' ') for word in self.label.text.splitlines()]
         space = self.label.myfont.size(' ')[0]
         max_height = self.size[1]-10
         x, y = self.label.pos
@@ -1295,8 +1295,9 @@ class TextArea(TextContainerRect):
     def draw(self,screen):
         super().draw(screen)
         pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
-        self.label.draw = self.blit_text
-        self.label.draw(screen, self.label.text)
+        self.blit_text(screen, self.label.text)
+        #self.label.draw = self.blit_text
+        #self.label.draw(screen, self.label.text)
 
     def fit_text_to_textarea(self):
         words = self.text.split()
