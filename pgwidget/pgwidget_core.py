@@ -1053,35 +1053,44 @@ class RadioButton(DraggableRect):
         else:
             screen.blit(self.img_empty,self.pos)
 
-class Checkbox(DraggableRect):
-    def __init__(self,pos,text,selected=False):
-        self.size=[20,20]
-        super().__init__(pos,self.size,(0,0,0),is_draggable=False)
+class CheckBox(DraggableRect):
+    def __init__(self, pos, relative_pos=[0,0], selected=False,color=c.forloop_lighter,):
+        self.size=[18,18]
+        super().__init__(pos,self.size,(0,0,0),is_draggable=False,relative_pos=relative_pos)
         self.pos=pos
-        self.text=text
         self.selected=selected
         try:
-            self.img_empty = pygame.image.load('checkbox_empty.png')
+            self.img_unticked = pygame.image.load('src//png//checkbox_unticked.png')
         except:
-            self.img_empty = pygame.image.load('img//checkbox_empty.png')
+            self.img_unticked = pygame.image.load('png//checkbox_unticked.png')
             
         try:
-            self.img_full = pygame.image.load('checkbox_full.png')
+            self.img_ticked = pygame.image.load('src//png//checkbox_ticked.png')
         except:
-            self.img_full = pygame.image.load('img//checkbox_full.png')
+            self.img_ticked = pygame.image.load('png//checkbox_ticked.png')
+        
             
         self.rescale()
-
+        
     def rescale(self):
-        self.img_empty=pygame.transform.smoothscale(self.img_empty, (self.size[0], self.size[1]))
-        self.img_full=pygame.transform.smoothscale(self.img_full, (self.size[0], self.size[1]))
-             
+        self.img_unticked=pygame.transform.smoothscale(self.img_unticked, (self.size[0], self.size[1]))
+        self.img_ticked=pygame.transform.smoothscale(self.img_ticked, (self.size[0], self.size[1]))
+    
+    def on_click(self):
+        pos=pygame.mouse.get_pos()
+        if self.is_point_in_rectangle(pos):
+            self.selected = not self.selected
+    
     def draw(self,screen):
-        if self.selected:
-            screen.blit(self.img_full,self.pos)
-        else:
-            screen.blit(self.img_empty,self.pos)
-
+        if self.visible:
+            if self.selected:
+                #pygame.draw.rect(screen,(250,0,0),self.pos+self.size)
+                screen.blit(self.img_ticked,self.pos)
+            else:
+                screen.blit(self.img_unticked,self.pos)
+                #super().draw(screen)
+                #screen.blit(self.img_empty,self.pos)
+    
 
 
 
@@ -1093,6 +1102,7 @@ class TextContainerRect(DraggableRect,abc.ABC):
         self.is_child = False
         self.relative_pos = relative_pos
         self.selected=False
+        self.text=text#text
     
     @property
     def selected(self):
@@ -1158,12 +1168,11 @@ class TextContainerRect(DraggableRect,abc.ABC):
 
 class Entry(TextContainerRect):
     def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False,selection_color=c.red):
+        self.is_password=is_password #must be initialized before text definition (in super())
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
-        
         self.labels = [Label(text, c.black)]
         self.is_child = False
         self.relative_pos = relative_pos
-        self.is_password=is_password
         
     
     @property
@@ -1372,6 +1381,8 @@ class Button(DraggableRect):
     def on_hover(self,screen,pos):
         if self.is_point_in_rectangle(pos):
             pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+            pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
+            
             orig_label_color=self.label.color
             self.label.color=self.hover_label_color
             self.label.draw(screen) 
@@ -1489,8 +1500,8 @@ class ComboBox(DraggableRect):
         if self.multiselect_indices is not None:
             for multiselect_index,value in self.multiselect_indices.items(): 
                 if value!=self.multiselect_values[-1]: #i.e. value!=False
-                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]*(1/4+multiselect_index)],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]*(1/4+multiselect_index)+10],3)
-                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]*(1/4+multiselect_index)],[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]*(1/4+multiselect_index)+10],3)
+                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-8    ,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
+                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-8,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
                     #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                     
 
@@ -1664,11 +1675,12 @@ class TimeTrigger:
 
 
 class GuiTimeHandler:
-    def __init__(self,glc,geh):
+    def __init__(self,glc,geh,refresh_period=10):
         self.glc=glc
         self.geh=geh
         self.t=0
         self.time_triggers=[]
+        self.refresh_period=refresh_period #10 ticks
        
     def tick(self):
         self.t=self.t+10
@@ -1679,7 +1691,7 @@ class GuiTimeHandler:
                 if self.geh.direction_list[i]==1:
                     self.glc.table1.move_selected(i+1) 
         
-        if self.t%10==0:
+        if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
             """
             for i,rect in enumerate(rects):
@@ -1836,6 +1848,8 @@ class GuiLayoutContext:
         self.pgwidgets=[]
         self.tables=[]
         self.table1=None
+        self.selected_entry=None
+        self.text=""
 
 
 
