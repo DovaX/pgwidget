@@ -151,10 +151,11 @@ root.update()
 
 
 class Label:
-    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000):
+    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000,is_cursor_drawing=False):
         """
         shown_text_max_length = 1000 ... default because of rendering speed
         """
+        
         self._text=text
         self.color=color
         self.pos=pos
@@ -168,7 +169,9 @@ class Label:
         self.visibility_layer=100
         self.cursor_position=None
         self._cursor_offset_index=None
-        self.is_cursor_drawing=True
+        self.is_cursor_drawing=is_cursor_drawing
+        self.highlighted_text_indices=None #list
+        
         self.shown_text_index_offset=0 #how many letters is the shown text offset against original self.text
         self.shown_text=self.text
         self.shown_text_max_length=shown_text_max_length # in letters
@@ -241,6 +244,14 @@ class Label:
             
         
         if self.visible:
+            if self.highlighted_text_indices is not None and self.cursor_position is not None: 
+                
+                pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0])
+                pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1])
+                highlighted_length=abs(pixel_length2-pixel_length)
+                print("HIGHLIGHT",pixel_length,pixel_length2,highlighted_length)
+                
+                pygame.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
             try:
                 self.lbl=self.myfont.render(self.shown_text, True, self.color)
             except pygame.error as e:
@@ -318,16 +329,30 @@ class Label:
         else:
             self.cursor_position=None
     
-    def on_click(self,click_around_label_permitted=False):
+    def on_click(self,click_around_label_permitted=False,click_with_shift=False):
         """click_around_label_permitted ... when not clicked exactly on label, it still calculates cursor position"""
         self.visible = True
         pos=pygame.mouse.get_pos()
+        
+        print("SHIFT",self.cursor_offset_index,click_with_shift)
+        if click_with_shift:
+            cursor_offset_index_memory=self.cursor_offset_index
+            
+        else:
+            cursor_offset_index_memory=None
+        
+        
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
             self.shown_cursor_offset_index=self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
             
+            if cursor_offset_index_memory is not None:
+                self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
+                
+            
         else:
             self.cursor_offset_index=None
+            self.highlighted_text_indices=None
             
             
     def on_key_down(self,event):
@@ -696,7 +721,8 @@ class Grid(ScrollableComponent):
         row_index=index%(self.rows+1)
         col_index=index//(self.rows+1)
         return(row_index,col_index)
-        
+    
+    
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
         index=row+col*self.rows #+1 for table
@@ -1150,11 +1176,11 @@ class TextContainerRect(DraggableRect,abc.ABC):
             # print("Drawing",label.shown_text)
             label.draw(screen)
 
-    def on_click(self, glc):
+    def on_click(self, glc, click_with_shift=False):
         # print("TRYING DESELECT")
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
-        self.labels[0].on_click(click_around_label_permitted=True)
+        self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
         super().on_click(glc)
         glc.text = self.text
         glc.selected_entry = self
@@ -1198,11 +1224,11 @@ class Entry(TextContainerRect):
             # print("Drawing",label.shown_text)
             label.draw(screen)
 
-    def on_click(self, glc):
-        # print("TRYING DESELECT")
+    def on_click(self, glc, click_with_shift=False):
+        print("TRYING DESELECT",click_with_shift)
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
-        self.labels[0].on_click(click_around_label_permitted=True)
+        self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
         super().on_click(glc)
         glc.text = self.text
         glc.selected_entry = self
