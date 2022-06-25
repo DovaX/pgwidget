@@ -1,5 +1,9 @@
 
 import pygame
+import pgwidget_pkg.pgwidget.engine as engine
+
+
+
 import sys
 
 import os
@@ -70,7 +74,7 @@ def initialize_pg(is_resizable=True):
     screen.fill(bg_color)
     """
     try:
-        window_icon = pygame.image.load('png//click.png')
+        window_icon = engine.image.load('png//click.png')
         pygame.display.set_icon(window_icon)
     except FileNotFoundError:
         print("Warning: Icon (icon.png) not found, skipped")
@@ -80,7 +84,7 @@ def initialize_pg(is_resizable=True):
     return(screen)
 
 
-screen=initialize_pg()
+#screen=initialize_pg()
 
 """TKINTER PART"""
 
@@ -163,7 +167,7 @@ class Label:
         self.font_type=font_type
         self.font_size=font_size
         self.relative_pos=relative_pos
-        self.myfont = pygame.font.SysFont(self.font_type, self.font_size)
+        self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         self.lbl=self.myfont.render(self.text, True, self.color)
         self.visible=visible
         self.visibility_layer=100
@@ -237,7 +241,7 @@ class Label:
     def draw(self,screen):
         
         
-        #pygame.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
+        #engine.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
         if self.is_cursor_drawing:
             self._draw_cursor(screen)
             
@@ -251,7 +255,7 @@ class Label:
                 highlighted_length=abs(pixel_length2-pixel_length)
                 print("HIGHLIGHT",pixel_length,pixel_length2,highlighted_length)
                 
-                pygame.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
+                engine.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
             try:
                 self.lbl=self.myfont.render(self.shown_text, True, self.color)
             except pygame.error as e:
@@ -266,7 +270,7 @@ class Label:
     
     def _draw_cursor(self,screen):
         if self.cursor_position is not None:
-            pygame.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
+            engine.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
             
     
     
@@ -332,7 +336,7 @@ class Label:
     def on_click(self,click_around_label_permitted=False,click_with_shift=False):
         """click_around_label_permitted ... when not clicked exactly on label, it still calculates cursor position"""
         self.visible = True
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         
         print("SHIFT",self.cursor_offset_index,click_with_shift)
         if click_with_shift:
@@ -357,13 +361,13 @@ class Label:
             
     def on_key_down(self,event):
         if self.cursor_offset_index is not None:
-            if event.key == pygame.K_RIGHT:
+            if event.key == engine.K_RIGHT:
                 self.shown_cursor_offset_index=min(self.shown_cursor_offset_index+1,len(self.shown_text))
                 self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
             
                 
                 
-            elif event.key == pygame.K_LEFT:    
+            elif event.key == engine.K_LEFT:    
                 self.shown_cursor_offset_index=max(self.shown_cursor_offset_index-1,0)
                 self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
             
@@ -381,14 +385,15 @@ class Label:
         text_pixels=self.myfont.size(self.text)[0]
         return(text_pixels)
         
-           
+"""          
 def refresh(pgwidgets):
+    #TO BE DEPRECATED
     screen.fill(bg_color)
         
     for j,widget_type in enumerate(pgwidgets):
         for i,widget in enumerate(widget_type.elements):
             widget.draw(screen)
-            
+"""            
 
  
          
@@ -454,7 +459,7 @@ class SelectableComponent(abc.ABC):
     def draw_selection_frame(self,screen):
         if self.selection_count>0:
             if self.is_drawing_selection_frame:    
-                pygame.draw.rect(screen,self.selection_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+                engine.draw.rect(screen,self.selection_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
     
     def on_click(self,*args):    
         #show
@@ -504,10 +509,10 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         #Warning: Image descendant does not inherit draw method
         if self.visible:
             if self.fill_color:
-                pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
+                engine.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
             
             if self.has_frame:
-                pygame.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+                engine.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
             self.draw_selection_frame(screen)
              
             if auto_draw_labels:
@@ -538,7 +543,7 @@ class Cell(DraggableRect):
         if not self.selected:
             super().draw(screen)
         else:
-            pygame.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+            engine.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
         
         self.label.draw(screen)  
 
@@ -568,10 +573,10 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def draw(self,screen):
         super().draw(screen)
 
-        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+self.size[0]-5,self.pos[1]+10],2)
-        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+4,self.pos[1]+10],2)
-        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]-10],2)
-        pygame.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+4,self.pos[1]+self.size[1]-10],2)
+        engine.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+self.size[0]-5,self.pos[1]+10],2)
+        engine.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+6],[self.pos[0]+4,self.pos[1]+10],2)
+        engine.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]-10],2)
+        engine.draw.line(screen,(96,96,96),[self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]-6],[self.pos[0]+4,self.pos[1]+self.size[1]-10],2)
         
         self.scrollbar_handle.draw(screen)
         
@@ -580,7 +585,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.scrollbar_handle.on_click()
         self.is_clicked=True
         
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         
         if pos[1]<self.pos[1]+15: #upper arrow
             self.shift_scrollbar(-10)    
@@ -604,7 +609,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=False
                 
     def on_drag(self,offset_pos_y):
-        print(offset_pos_y,pygame.mouse.get_pos())
+        print(offset_pos_y,engine.mouse.get_pos())
         
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         self.calculate_handle_ratio_position()
@@ -624,10 +629,10 @@ class ScrollbarHandle(DraggableRect): #ImprovedDraggableRect
     def draw(self,screen):
         super().draw(screen)
         if self.is_clicked:
-            pygame.draw.rect(screen,(166,166,166),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
+            engine.draw.rect(screen,(166,166,166),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
     
         else:    
-            pygame.draw.rect(screen,(205,205,205),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
+            engine.draw.rect(screen,(205,205,205),[self.pos[0],self.pos[1],self.size[0],self.size[1]])
     
     def on_click(self):
         self.is_clicked=True
@@ -650,14 +655,14 @@ class ScrollableComponent:
         
     def on_click(self):
         print("Scrollable component on click")
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         if self.scrollbar.is_point_in_rectangle(pos):
             self.scrollbar.on_click()
             self.handle_offset = self.scrollbar.calculate_handle_offset()
             
         
     def on_drag(self,offset_pos_y):
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         print("SCROLLABLE",pos,offset_pos_y)
         if self.scrollbar.is_clicked: 
             self.scrollbar.on_drag(offset_pos_y) 
@@ -792,15 +797,15 @@ class Grid(ScrollableComponent):
         
         
         if self.frame_border_width!=-1:
-            pygame.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
+            engine.draw.rect(screen,(130,130,130),[self.pos[0]-1,self.pos[1]-1]+self.table_size,self.frame_border_width)
         
         #selected cell
         
         if self.selected_cell_index is not None:
             cell=self.table_cells[self.selected_cell_index]
-            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
-            pygame.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
-            pygame.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
+            engine.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
+            engine.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
+            engine.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
         
         
         
@@ -820,7 +825,7 @@ class Grid(ScrollableComponent):
         self.scrollbar.on_unclick()
              
     #def on_drag(self,offset_pos_y):
-    #    pos=pygame.mouse.get_pos()
+    #    pos=engine.mouse.get_pos()
     #    if self.scrollbar.is_clicked:    
     #        self.scrollbar.on_drag(offset_pos_y) 
    
@@ -1019,7 +1024,7 @@ class ButtonImage(DraggableRect):
     
     def rescale(self):
         if type(self.img)!=list: #animation
-            self.img=pygame.transform.smoothscale(self.img, (self.size[0], self.size[1]))
+            self.img=engine.transform.smoothscale(self.img, (self.size[0], self.size[1]))
                 
     def draw(self,screen):   
         if type(self.img)==list: #animation
@@ -1054,22 +1059,22 @@ class RadioButton(DraggableRect):
         self.selected=selected
                 
         try:
-            self.img_empty = pygame.image.load('radio_empty.png')
+            self.img_empty = engine.image.load('radio_empty.png')
         except:
-            self.img_empty = pygame.image.load('img//radio_empty.png')
+            self.img_empty = engine.image.load('img//radio_empty.png')
             
         try:
-            self.img_full = pygame.image.load('radio_full.png')
+            self.img_full = engine.image.load('radio_full.png')
         except:
-            self.img_full = pygame.image.load('img//radio_full.png')
+            self.img_full = engine.image.load('img//radio_full.png')
             
-        #self.img_empty=pygame.image.load("radio_empty.png")
-        #self.img_full=pygame.image.load("radio_full.png")
+        #self.img_empty=engine.image.load("radio_empty.png")
+        #self.img_full=engine.image.load("radio_full.png")
         self.rescale()
 
     def rescale(self):
-        self.img_empty=pygame.transform.smoothscale(self.img_empty, (self.size[0], self.size[1]))
-        self.img_full=pygame.transform.smoothscale(self.img_full, (self.size[0], self.size[1]))
+        self.img_empty=engine.transform.smoothscale(self.img_empty, (self.size[0], self.size[1]))
+        self.img_full=engine.transform.smoothscale(self.img_full, (self.size[0], self.size[1]))
            
         
     
@@ -1086,31 +1091,31 @@ class CheckBox(DraggableRect):
         self.pos=pos
         self.selected=selected
         try:
-            self.img_unticked = pygame.image.load('src//png//checkbox_unticked.png')
+            self.img_unticked = engine.image.load('src//png//checkbox_unticked.png')
         except:
-            self.img_unticked = pygame.image.load('png//checkbox_unticked.png')
+            self.img_unticked = engine.image.load('png//checkbox_unticked.png')
             
         try:
-            self.img_ticked = pygame.image.load('src//png//checkbox_ticked.png')
+            self.img_ticked = engine.image.load('src//png//checkbox_ticked.png')
         except:
-            self.img_ticked = pygame.image.load('png//checkbox_ticked.png')
+            self.img_ticked = engine.image.load('png//checkbox_ticked.png')
         
             
         self.rescale()
         
     def rescale(self):
-        self.img_unticked=pygame.transform.smoothscale(self.img_unticked, (self.size[0], self.size[1]))
-        self.img_ticked=pygame.transform.smoothscale(self.img_ticked, (self.size[0], self.size[1]))
+        self.img_unticked=engine.transform.smoothscale(self.img_unticked, (self.size[0], self.size[1]))
+        self.img_ticked=engine.transform.smoothscale(self.img_ticked, (self.size[0], self.size[1]))
     
     def on_click(self):
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         if self.is_point_in_rectangle(pos):
             self.selected = not self.selected
     
     def draw(self,screen):
         if self.visible:
             if self.selected:
-                #pygame.draw.rect(screen,(250,0,0),self.pos+self.size)
+                #engine.draw.rect(screen,(250,0,0),self.pos+self.size)
                 screen.blit(self.img_ticked,self.pos)
             else:
                 screen.blit(self.img_unticked,self.pos)
@@ -1329,7 +1334,7 @@ class TextArea(TextContainerRect):
         
     def draw(self,screen):
         super().draw(screen)
-        pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
+        engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
         self.blit_text(screen, self.label.text)
         #self.label.draw = self.blit_text
         #self.label.draw(screen, self.label.text)
@@ -1395,19 +1400,19 @@ class Button(DraggableRect):
         #print(self.label.color)
         if self.visible:
             if self.is_clicked:
-                pygame.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
+                engine.draw.rect(screen,(180,180,180),[self.pos[0],self.pos[1],self.size[0],self.size[1]]) 
             else:
                 super().draw(screen)
-            pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
+            engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
             self.label.draw(screen)
             
-            pos=pygame.mouse.get_pos()
+            pos=engine.mouse.get_pos()
             self.on_hover(screen,pos)
     
     def on_hover(self,screen,pos):
         if self.is_point_in_rectangle(pos):
-            pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
-            pygame.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
+            engine.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
+            engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
             
             orig_label_color=self.label.color
             self.label.color=self.hover_label_color
@@ -1492,43 +1497,43 @@ class ComboBox(DraggableRect):
             
             self._update_cells_positions()
             if hasattr(self, "cell"):
-                pygame.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
+                engine.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
                 self.cell.draw(screen)
-                pygame.draw.rect(screen,self.border_color,self.cell.pos+self.cell.size,1)
-                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
-                pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
-                #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                engine.draw.rect(screen,self.border_color,self.cell.pos+self.cell.size,1)
+                engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
+                engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
+                #engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
             if self._is_rolled:
-                pos=pygame.mouse.get_pos()
+                pos=engine.mouse.get_pos()
                 for cell, value in zip(self._cells, self.values):
                     cell.text = value
                     cell.draw(screen)
-                self.on_hover(pos)
+                self.on_hover(screen,pos)
                 
-                self._draw_multiselect_crosses()
+                self._draw_multiselect_crosses(screen)
      
         
             
-    def on_hover(self,pos):
+    def on_hover(self,screen,pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1): #hovering
             #super().draw(auto_draw_labels=False)
             y=pos[1]-self.pos[1]
             option_height=self.size[1]
             index=y//option_height #0 - selected item
             if index!=0: #not hover over selected item
-                pygame.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
+                engine.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
                 self._cells[index-1].label.color=self.hover_label_color
                 self._cells[index-1].label.draw(screen)
                 self._cells[index-1].label.color=(0,0,0)
                 
-    def _draw_multiselect_crosses(self):
+    def _draw_multiselect_crosses(self,screen):
         if self.multiselect_indices is not None:
             for multiselect_index,value in self.multiselect_indices.items(): 
                 if value!=self.multiselect_values[-1]: #i.e. value!=False
-                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-8    ,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
-                    pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-8,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
-                    #pygame.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                    engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-8    ,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
+                    engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-8,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
+                    #engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                     
 
     
@@ -1543,7 +1548,7 @@ class ComboBox(DraggableRect):
                 return(False)  
                     
     def on_click(self):
-        pos=pygame.mouse.get_pos()
+        pos=engine.mouse.get_pos()
         #if self.visible:   
             
             
@@ -1624,7 +1629,7 @@ class CascadeMenu(Button):
         super().__init__(pos,size,text,color=color,border_color=border_color)       
 
 
-    def draw(self):
+    def draw(self,screen):
         super().draw(screen)
 
 
@@ -1669,7 +1674,7 @@ class DoxyplotImage(ButtonImage,dp.Doxyplot):
     
     
     def draw(self,screen):
-        pygame.draw.rect(screen,(100,200,100),self.pos+self.size,1)
+        engine.draw.rect(screen,(100,200,100),self.pos+self.size,1)
         super().draw(screen)
         
         
@@ -1751,7 +1756,7 @@ class GuiEventHandler:
     
     def handle_left_click(self):
         self.glc.text = ""  # on click remove all text
-        pos = pygame.mouse.get_pos()
+        pos = engine.mouse.get_pos()
 
         for i, widget_type in enumerate(self.glc.pgwidgets):
             widget_type.click_element_function(pos)
@@ -1788,7 +1793,7 @@ class GuiEventHandler:
 
 
     def handle_unclick(self):
-        pos = pygame.mouse.get_pos()
+        pos = engine.mouse.get_pos()
                     
                     
         #Dynamic drawing of button click
@@ -1803,20 +1808,20 @@ class GuiEventHandler:
 
     def handle_key_down(self,event):
         direction_list=[0,0,0,0]   
-        if event.key == pygame.K_RIGHT:  
+        if event.key == engine.K_RIGHT:  
             direction_list[0]=1
               
-        elif event.key == pygame.K_UP:
+        elif event.key == engine.K_UP:
             direction_list[1]=1
             
-        elif event.key == pygame.K_LEFT:
+        elif event.key == engine.K_LEFT:
             direction_list[2]=1
             
-        elif event.key == pygame.K_DOWN:
+        elif event.key == engine.K_DOWN:
             direction_list[3]=1
           
             
-        if event.key == pygame.K_RETURN:
+        if event.key == engine.K_RETURN:
             try:
                 self.glc.table1.move_selected(4)
             except AttributeError:
@@ -1827,12 +1832,12 @@ class GuiEventHandler:
         except AttributeError:
             text=""
         
-        if event.key == pygame.K_BACKSPACE:
+        if event.key == engine.K_BACKSPACE:
             self.glc.erase_letter_from_text()
             self.glc._propagate_glc_text_to_entries()
             
             
-        elif event.key == pygame.K_DELETE:
+        elif event.key == engine.K_DELETE:
             text = ""
         else:
             letter=event.unicode
@@ -1849,16 +1854,16 @@ class GuiEventHandler:
         
    
     def handle_key_up(self,event):
-        if event.key == pygame.K_RIGHT:  
+        if event.key == engine.K_RIGHT:  
             self.direction_list[0]=0
               
-        elif event.key == pygame.K_UP:
+        elif event.key == engine.K_UP:
             self.direction_list[1]=0
             
-        elif event.key == pygame.K_LEFT:
+        elif event.key == engine.K_LEFT:
             self.direction_list[2]=0
             
-        elif event.key == pygame.K_DOWN:
+        elif event.key == engine.K_DOWN:
             self.direction_list[3]=0
    
     
