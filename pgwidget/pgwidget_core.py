@@ -1,6 +1,7 @@
 
-import pygame
 import pgwidget_pkg.pgwidget.engine as engine
+
+import pygame
 
 
 
@@ -64,14 +65,20 @@ def initialize_pg(is_resizable=True):
     bg_color=(150,150,150) #tuple
     
     if is_resizable:
-        screen = pygame.display.set_mode([1366,768],pygame.RESIZABLE)
+        screen = engine.display.set_mode([1366,768],engine.RESIZABLE)
     else:
-        screen = pygame.display.set_mode([1366,768])
-            
-    pygame.init()
-    pygame.display.set_caption("Forloop")
+        screen = engine.display.set_mode([1366,768])
+       
+        
+    print("SCREEN",screen)
+    engine.init()
+    engine.display.set_caption("Forloop")
     #clock=pygame.time.Clock()
-    screen.fill(bg_color)
+    try:
+        screen.fill(bg_color)
+    except AttributeError: #web has no fill function
+        print("Screen fill - engine disable")
+        
     """
     try:
         window_icon = engine.image.load('png//click.png')
@@ -267,7 +274,6 @@ class Label:
                 self.lbl = self.myfont.render("", True, self.color)
             screen.blit(self.lbl, (self.pos[0], self.pos[1]))
             
-    
     def _draw_cursor(self,screen):
         if self.cursor_position is not None:
             engine.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
@@ -1716,7 +1722,8 @@ class GuiTimeHandler:
     def tick(self):
         self.t=self.t+10
         
-        
+        print(self.time_triggers)
+        print(self.refresh_period,"PERIOD")
         if self.t%50==0:
             for i in range(len(self.geh.direction_list)):
                 if self.geh.direction_list[i]==1:
@@ -1724,21 +1731,20 @@ class GuiTimeHandler:
         
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
+            print("REFRESH")
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
             """
         if self.t%1000==0:
-            print(self.t)
+            print("TIME",self.t)
             
         for i,trigger in enumerate(self.time_triggers):
             if self.t%trigger.frequency==0:
                 trigger.function()
+                print("Trigger executed")
             
-        
-        
-        
-        pygame.time.wait(10)
+        engine.time.wait(10)
         
         
       
@@ -1886,15 +1892,18 @@ class GuiLayoutContext:
 
     def refresh(self,screen):
         
-
+        #try:
         screen.fill(c.selected_background)
+        #except AttributeError: #can't globally fill
+        #    print("Screen fill - engine disable")
         
         pgw_widgets=[widget for widget_type in self.pgwidgets for widget in widget_type.elements] #fancy double list comprehension
-        
+        print(pgw_widgets)
         for i,shape in enumerate(pgw_widgets):
             if shape.visible:
                 draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
                 if "screen" in draw_arguments:
+                    print("SHAPE",shape)
                     shape.draw(screen) #screen arg - most natural?
                 else:
                     shape.draw()
@@ -1977,18 +1986,81 @@ class GuiLayoutContext:
 
 
 
-def main_program_loop(glc,geh,gth):
+
+#import time
+#time.sleep(10)
+#if __name__ == "crypto_dashboard":
+
+
+import threading
+
+def remote_main_program_loop(glc,geh,gth):
     """GuiLayoutContext,GuiEventHandler,GuiTimeHandler"""
     done=False
     t=0
     new_select_possible=True
     selected=None
     
-   
-                
+    
+    class MyApp(engine.App):
+        def __init__(self, *args):
+            self.stop_flag=False
+            self.time=0
+            
+            
+            res_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'png')
+            super(MyApp, self).__init__(*args, static_file_path={'png': res_path})
+        
+            
+        def display_time(self):
+            print("display_time",self.time)
+            self.lblTime.set_text('Play time: ' + str(self.time))
+        
+            self.time += 1
+            engine.display.clear()
+            #gth.tick()
+            #glc.refresh(engine.display.screen)
+            
+            if not self.stop_flag:
+                threading.Timer(1, self.display_time).start() #must be last row
+            
+            
+            
+            
+        def main(self):
+            
+            self.lblTime = engine.gui.Label('Time')
+            #self.lblTime.set_size(100, 30)
+            self.lblTime.set_text('Play time: ' + str(self.time))
+            
+            engine.display.screen.onmousedown.connect(self.onmousedown) #,x,y
+            glc.refresh(engine.display.screen)
+            
+            self.display_time()
+        
+            engine.display.screen.append(self.lblTime)
+            return engine.display.screen
+        
+        
+        def onmousedown(self, emitter, x, y):
+            print("the mouse position is: ", x, y)
+            geh.handle_left_click()                                
+                        
+            #engine.draw.rect(engine.display.screen,(100,200,100),[x,y,20,20])
+            
+        def on_close(self):
+            self.stop_flag = True
+            super(MyApp, self).on_close()
+    
+    
+    #server=
+    engine.start(MyApp, multiple_instance=True, address='0.0.0.0', port=0, debug=True, start_browser=True)
+
+    
+    """        
     while not done:
         try:
-            for event in pygame.event.get():
+            for event in engine.event.get():
                 if event.type == pygame.QUIT:
                     done = True
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button==1: #Left button of mouse
@@ -2031,7 +2103,78 @@ def main_program_loop(glc,geh,gth):
                 print(e)
             
                 
-            pygame.display.flip()   
+            engine.display.flip()   
+    
+        except KeyboardInterrupt:
+            pygame.display.quit()
+            pygame.quit()
+            sys.exit(0)
+    
+        gth.tick()
+      
+    pygame.display.quit()
+    pygame.quit()
+    sys.exit(0)
+    """
+
+
+
+
+def main_program_loop(glc,geh,gth):
+    """GuiLayoutContext,GuiEventHandler,GuiTimeHandler"""
+    done=False
+    t=0
+    new_select_possible=True
+    selected=None
+    
+    
+               
+    while not done:
+        try:
+            for event in engine.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button==1: #Left button of mouse
+                    geh.handle_left_click()                                
+                                
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button==3: #Right button of mouse
+                    geh.handle_right_click(event)
+                             
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    geh.handle_unclick()
+                                    
+                elif event.type == pygame.MOUSEMOTION:                
+                    for i,table in enumerate(glc.tables):
+                        if geh.actively_selected_draggable_component==table:
+                            geh.drag_table(table,event)
+                    
+                    for i,rect in enumerate(glc.rects+glc.entries):
+                        if geh.actively_selected_draggable_component==rect:
+                            geh.drag_rect(rect,event)
+                            
+                elif event.type == pygame.KEYDOWN:
+                    geh.handle_key_down(event)
+                    
+                    
+                elif event.type == pygame.KEYUP: 
+                    geh.handle_key_up(event)
+            
+                elif event.type == pygame.QUIT:
+                    done = True
+            
+                pygame.event.pump()
+                keys = pygame.key.get_pressed()
+                    
+                
+                
+            try: #Handling tkinter and pygame loops
+                root.update()
+            except tk.TclError as e:
+                sys.exit(0)
+                print(e)
+            
+                
+            engine.display.flip()   
     
         except KeyboardInterrupt:
             pygame.display.quit()
