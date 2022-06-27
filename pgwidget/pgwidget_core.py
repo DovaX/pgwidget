@@ -1,5 +1,5 @@
 
-import pgwidget_pkg.pgwidget.engine as engine
+import pgwidget.engine as engine
 
 import pygame
 
