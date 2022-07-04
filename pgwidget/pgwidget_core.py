@@ -1706,9 +1706,10 @@ import inspect
 
 
 class TimeTrigger:
-    def __init__(self,frequency,function=lambda *x:None):
+    def __init__(self,frequency,function=lambda *x:None,args=None):
         self.frequency=frequency
         self.function=function
+        self.args=args
 
 
 class GuiTimeHandler:
@@ -1722,16 +1723,21 @@ class GuiTimeHandler:
     def tick(self):
         self.t=self.t+10
         
-        print(self.time_triggers)
-        print(self.refresh_period,"PERIOD")
-        if self.t%50==0:
-            for i in range(len(self.geh.direction_list)):
-                if self.geh.direction_list[i]==1:
-                    self.glc.table1.move_selected(i+1) 
+        print(self.t)
+        #print(self.time_triggers)
+        #print(self.refresh_period,"PERIOD")
         
+        self.glc.refresh(self.glc.screen)
+        if self.t%50==0:
+            if hasattr(self.geh,"direction_list"):    
+                for i in range(len(self.geh.direction_list)):
+                    if self.geh.direction_list[i]==1:
+                        self.glc.table1.move_selected(i+1) 
+            
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
             print("REFRESH")
+            print([(x.visible,x.pos) for x in self.glc.rects.elements])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
@@ -1741,9 +1747,13 @@ class GuiTimeHandler:
             
         for i,trigger in enumerate(self.time_triggers):
             if self.t%trigger.frequency==0:
-                trigger.function()
-                print("Trigger executed")
-            
+                print("TRIGGER EXECUTED")
+                if trigger.args is not None:
+                    trigger.function(trigger.args)
+                else:
+                    trigger.function()
+                    print("Trigger executed")
+                
         engine.time.wait(10)
         
         
@@ -2018,7 +2028,8 @@ def remote_main_program_loop(glc,geh,gth):
         
             self.time += 1
             engine.display.clear()
-            #gth.tick()
+            gth.tick()
+            
             #glc.refresh(engine.display.screen)
             
             if not self.stop_flag:
@@ -2034,6 +2045,7 @@ def remote_main_program_loop(glc,geh,gth):
             self.lblTime.set_text('Play time: ' + str(self.time))
             
             engine.display.screen.onmousedown.connect(self.onmousedown) #,x,y
+            #engine.display.screen.onmouseover.connect(self.onmouseover) #,x,y
             glc.refresh(engine.display.screen)
             
             self.display_time()
@@ -2044,9 +2056,22 @@ def remote_main_program_loop(glc,geh,gth):
         
         def onmousedown(self, emitter, x, y):
             print("the mouse position is: ", x, y)
-            geh.handle_left_click()                                
+            
+            class Event:
+                def __init__(self,x,y):
+                    self.pos=[int(float(x)),int(float(y))]
+                    
+            event=Event(x,y)
+            geh.handle_left_click() 
+            
+            geh.handle_left_click_not_refactored(event) 
+                               
                         
             #engine.draw.rect(engine.display.screen,(100,200,100),[x,y,20,20])
+            
+            
+        def onmouseover(self):
+            print("MOUSE")
             
         def on_close(self):
             self.stop_flag = True

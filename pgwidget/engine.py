@@ -36,9 +36,13 @@ class MouseEngine:
         if self.engine_type=="desktop":
             return(pygame.mouse.get_pos())
         elif self.engine_type=="web":
-            print("GET POS")
-    
-            return([200,200])
+            import win32api
+            print("GET POS - temporary hot fix")
+            if os.name == 'nt':  # If windows - get platform mouse position
+                pos = win32api.GetCursorPos()
+            pos=(pos[0]-207+55,pos[1]-134+20)
+            print(pos)
+            return(pos)
             
 class TransformEngine:
     def __init__(self,engine_type="desktop"):
@@ -52,7 +56,7 @@ class TransformEngine:
         elif self.engine_type=="web":
             #image.style["width"]=str(size[0])+"px"
             #image.style["height"]=str(size[1])+"px"
-            print("SMOOTHSCALE SIZE",size)
+            #print("SMOOTHSCALE SIZE",size)
             try:
                 image.set_size(size[0], size[1])
                 image.size=size #to remember size
@@ -123,18 +127,21 @@ class ImageEngine:
 class DisplayEngine:
     def __init__(self,engine_type="desktop"):
         self.engine_type=engine_type
-        
-        self.screen=self.set_mode([1600,900],pygame.RESIZABLE) #generalize
+        self.window_size=[1600,900]
+        self.screen=self.set_mode(self.window_size,pygame.RESIZABLE) #generalize
         
     def get_surface(self):
         return(pygame.display.get_surface())
 
     def get_size_of_window(self):
-        screen_size = pygame.display.get_surface().get_size()  # get size of the window - default 1600x900
+        if self.engine_type=="desktop":
+            screen_size = pygame.display.get_surface().get_size()  # get size of the window - default 1600x900
+        else:
+            screen_size = self.window_size
         return(screen_size)
     
     def clear(self):
-        screen=self.set_mode([1600,900],None)
+        screen=self.set_mode(self.window_size,None)
     
     
     def set_mode(self,window_size,resizable=None): #set size
@@ -163,7 +170,7 @@ class DisplayEngine:
                     image_path=surface.path
                     image_size=surface.size
                     #try:
-                    print("IMAGE SIZE",image_size)
+                    #print("IMAGE SIZE",image_size)
                     #    image.copy()
                     #except TypeError:
                     #try:  
