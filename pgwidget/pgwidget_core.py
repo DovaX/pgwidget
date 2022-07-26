@@ -1339,9 +1339,14 @@ class TextArea(TextContainerRect):
                 break
         
     def draw(self,screen):
-        super().draw(screen)
+        # super().draw(screen)
         engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
+        self.label.pos = [self.pos[0]+2,self.pos[1]+4]
         self.blit_text(screen, self.label.text)
+
+        for label in self.labels:
+            if label.is_cursor_drawing:
+                label._draw_cursor(screen)
         #self.label.draw = self.blit_text
         #self.label.draw(screen, self.label.text)
 
