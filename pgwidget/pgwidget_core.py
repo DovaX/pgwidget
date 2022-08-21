@@ -361,7 +361,9 @@ class Label:
             while text_height < y_offset:
                 text_height = self.get_text_pixel_height(letter_row)
                 letter_row += 1
-            letter_row -= 1
+            
+            if letter_row > 0:
+                letter_row -= 1
 
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
         total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
