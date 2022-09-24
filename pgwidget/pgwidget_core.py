@@ -1823,7 +1823,7 @@ class GuiTimeHandler:
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
             print("REFRESH")
-            print([(x.visible,x.pos) for x in self.glc.rects.elements])
+            print([(x.visible,x.pos) for x in self.glc.rects])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
