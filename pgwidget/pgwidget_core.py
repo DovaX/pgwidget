@@ -195,6 +195,8 @@ class Label:
             self.shown_text_rows = self.shown_text.split('\n')
         else:
             self.shown_text_rows = [self.shown_text]
+
+        self.is_interactive_mode_enabled = True
         
         
     @property
@@ -242,8 +244,11 @@ class Label:
         self._cursor_row_index = cursor_row_index
         self.shown_cursor_row_index=self._cursor_row_index
         
-        self._recalculate_cursor_position() #TODO: add on_drag      
-        
+        self._recalculate_cursor_position() #TODO: add on_drag 
+
+
+    def switch_interactive_mode(self):
+        self.is_interactive_mode_enabled = not self.is_interactive_mode_enabled    
      
         
     def refresh_shown_text(self):
@@ -276,7 +281,7 @@ class Label:
         
         
         #engine.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
-        if self.is_cursor_drawing:
+        if self.is_cursor_drawing and self.is_interactive_mode_enabled:
             self._draw_cursor(screen)
             
             
@@ -429,7 +434,7 @@ class Label:
             
             
     def on_key_down(self,event):
-        if self.cursor_offset_index is not None:
+        if self.cursor_offset_index is not None and self.is_interactive_mode_enabled:
             shown_text_rows = self.shown_text.split('\n')
             
             if event.key == engine.K_RIGHT:
@@ -1427,7 +1432,6 @@ class TextArea(TextContainerRect):
     def draw(self,screen):
         # super().draw(screen)
         engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
-        self.label.pos = [self.pos[0]+2,self.pos[1]+4]
         self.blit_text(screen, self.label.text)
 
         for label in self.labels:
