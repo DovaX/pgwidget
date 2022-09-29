@@ -51,8 +51,11 @@ class TransformEngine:
     def smoothscale(self,image,size):
         
         if self.engine_type=="desktop":
-            rescaled_image=pygame.transform.smoothscale(image,size)#self.smoothscale=pygame.transform.smoothscale
-
+            try:
+                rescaled_image=pygame.transform.smoothscale(image,size)#self.smoothscale=pygame.transform.smoothscale
+            except ValueError: #ValueError: Only 24-bit or 32-bit surfaces can be smoothly scaled
+                rescaled_image=pygame.transform.scale(image,size)
+                
         elif self.engine_type=="web":
             #image.style["width"]=str(size[0])+"px"
             #image.style["height"]=str(size[1])+"px"

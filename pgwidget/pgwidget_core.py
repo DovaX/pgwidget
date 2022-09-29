@@ -57,37 +57,32 @@ os.environ['SDL_VIDEODRIVER'] = 'windib'
 
 """TKINTER END PART"""
 
-def initialize_pg(is_resizable=True):
-    
-    global bg_color
-    global color
-    
-    bg_color=(150,150,150) #tuple
+
+def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,768], caption="", window_icon_path=None):
     
     if is_resizable:
-        screen = engine.display.set_mode([1366,768],engine.RESIZABLE)
+        screen = engine.display.set_mode(window_size,engine.RESIZABLE)
     else:
-        screen = engine.display.set_mode([1366,768])
+        screen = engine.display.set_mode(window_size)
        
         
-    print("SCREEN",screen)
     engine.init()
-    engine.display.set_caption("Forloop")
+    engine.display.set_caption(caption)
     #clock=pygame.time.Clock()
     try:
         screen.fill(bg_color)
+        engine.display.flip()
     except AttributeError: #web has no fill function
         print("Screen fill - engine disable")
+     
         
-    """
     try:
-        window_icon = engine.image.load('png//click.png')
+        window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
         pygame.display.set_icon(window_icon)
     except FileNotFoundError:
         print("Warning: Icon (icon.png) not found, skipped")
         pass
-    """
-    color=(200,200,200)
+    
     return(screen)
 
 
@@ -1832,7 +1827,7 @@ class GuiTimeHandler:
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
             print("REFRESH")
-            print([(x.visible,x.pos) for x in self.glc.rects.elements])
+            print([(x.visible,x.pos) for x in self.glc.rects])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
