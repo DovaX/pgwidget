@@ -76,7 +76,14 @@ class TransformEngine:
 class FontEngine:
     def __init__(self,engine_type="desktop"):
         self.engine_type=engine_type
-        
+      
+    def Font(self,font_file,font_size):
+        if self.engine_type=="desktop":
+            return(pygame.font.Font(font_file,font_size))
+        elif self.engine_type=="web":
+            print("Font not implemented")
+            return(None)
+      
     def SysFont(self,font_type,font_size):
         if self.engine_type=="desktop":
             return(pygame.font.SysFont(font_type,font_size))
