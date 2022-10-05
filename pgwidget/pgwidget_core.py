@@ -1,11 +1,12 @@
+import sys
 
-import pgwidget.engine as engine
+if sys.platform == "darwin":
+    import pygame as engine
+else:
+    import pgwidget.engine as engine
+
 
 import pygame
-
-
-
-import sys
 
 import os
 
