@@ -221,6 +221,9 @@ class Label:
         
     @text.setter
     def text(self,text):
+
+        if not self.is_multiline_label:
+            text = text.replace("\n", " ")
         
         self._text=str(text)
         self.refresh_shown_text()
