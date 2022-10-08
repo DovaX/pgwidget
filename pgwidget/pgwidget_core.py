@@ -221,10 +221,10 @@ class Label:
         
     @text.setter
     def text(self,text):
-
-        if not self.is_multiline_label:
-            text = text.replace("\n", " ")
-        
+        if type(text)==str: #handling of NoneType
+            if not self.is_multiline_label:
+                text = text.replace("\n", " ")
+            
         self._text=str(text)
         self.refresh_shown_text()
         self.shown_text_index_offset=len(self._text)-len(self.shown_text)
