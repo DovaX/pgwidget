@@ -80,7 +80,7 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
     try:
         window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
         pygame.display.set_icon(window_icon)
-    except FileNotFoundError:
+    except (FileNotFoundError,TypeError):
         print("Warning: Icon (icon.png) not found, skipped")
         pass
     
@@ -1835,7 +1835,7 @@ class GuiTimeHandler:
     def tick(self):
         self.t=self.t+10
         
-        print(self.t)
+        #print(self.t)
         #print(self.time_triggers)
         #print(self.refresh_period,"PERIOD")
         
@@ -1848,8 +1848,8 @@ class GuiTimeHandler:
             
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
-            print("REFRESH")
-            print([(x.visible,x.pos) for x in self.glc.rects])
+            #print("REFRESH")
+            #print([(x.visible,x.pos) for x in self.glc.rects])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
@@ -2020,12 +2020,12 @@ class GuiLayoutContext:
         #    print("Screen fill - engine disable")
         
         pgw_widgets=[widget for widget_type in self.pgwidgets for widget in widget_type.elements] #fancy double list comprehension
-        print(pgw_widgets)
+        #print(pgw_widgets)
         for i,shape in enumerate(pgw_widgets):
             if shape.visible:
                 draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
                 if "screen" in draw_arguments:
-                    print("SHAPE",shape)
+                    #print("SHAPE",shape)
                     shape.draw(screen) #screen arg - most natural?
                 else:
                     shape.draw()
