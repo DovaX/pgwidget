@@ -266,9 +266,22 @@ class DrawEngine:
        
         
     def rect(self,screen,color,pos_size,width=0):
-        #print(screen)
         if self.engine_type=="desktop":
+            pos=pos_size[:2]
+            size=pos_size[2:]
+            
+            if size[0]<0:
+                pos[0]+=size[0]
+                size[0]=abs(size[0])
+                
+            if size[1]<0:
+                pos[1]+=size[1]
+                size[1]=abs(size[1])
+                
+            pos_size=pos+size
+                
             pygame.draw.rect(screen,color,pos_size,width)
+            
         else:
             pos=pos_size[:2]
             size=pos_size[2:]

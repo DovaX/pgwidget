@@ -1,11 +1,12 @@
+import sys
 
-import pgwidget.engine as engine
+if sys.platform == "darwin":
+    import pygame as engine
+else:
+    import pgwidget.engine as engine
+
 
 import pygame
-
-
-
-import sys
 
 import os
 
@@ -79,7 +80,7 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
     try:
         window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
         pygame.display.set_icon(window_icon)
-    except FileNotFoundError:
+    except (FileNotFoundError,TypeError):
         print("Warning: Icon (icon.png) not found, skipped")
         pass
     
@@ -184,7 +185,7 @@ class Label:
         self.visibility_layer=100
         self.cursor_position=None
         self._cursor_offset_index=None
-        self._cursor_row_index = 0
+        self._cursor_row_index = None
         self.is_cursor_drawing=is_cursor_drawing
         self.highlighted_text_indices=None #list
         
@@ -193,11 +194,14 @@ class Label:
         self.shown_text_max_length=shown_text_max_length # in letters
         self.selected=False #must be initialized after shown_text_max_length
         self.shown_cursor_offset_index=0
+        self.shown_cursor_row_index = 0
 
         if self.is_multiline_label:
             self.shown_text_rows = self.shown_text.split('\n')
         else:
             self.shown_text_rows = [self.shown_text]
+
+        self.is_interactive_mode_enabled = True
         
         
     @property
@@ -217,7 +221,10 @@ class Label:
         
     @text.setter
     def text(self,text):
-        
+        if type(text)==str: #handling of NoneType
+            if not self.is_multiline_label:
+                text = text.replace("\n", " ")
+            
         self._text=str(text)
         self.refresh_shown_text()
         self.shown_text_index_offset=len(self._text)-len(self.shown_text)
@@ -242,11 +249,17 @@ class Label:
     
     @cursor_row_index.setter
     def cursor_row_index(self,cursor_row_index):
-        self._cursor_row_index = cursor_row_index
-        self.shown_cursor_row_index=self._cursor_row_index
+        if cursor_row_index is not None:
+            self._cursor_row_index = max(cursor_row_index, 0)
+            self.shown_cursor_row_index=self._cursor_row_index
+        else:
+            self._cursor_row_index = None
         
-        self._recalculate_cursor_position() #TODO: add on_drag      
-        
+        self._recalculate_cursor_position() #TODO: add on_drag 
+
+
+    def switch_interactive_mode(self):
+        self.is_interactive_mode_enabled = not self.is_interactive_mode_enabled    
      
         
     def refresh_shown_text(self):
@@ -279,7 +292,7 @@ class Label:
         
         
         #engine.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
-        if self.is_cursor_drawing:
+        if self.is_cursor_drawing and self.is_interactive_mode_enabled:
             self._draw_cursor(screen)
             
             
@@ -308,9 +321,9 @@ class Label:
         if self.cursor_position is not None:
             # engine.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
             if color == "white":
-                engine.draw.line(screen,c.white,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - self.font_size])
+                engine.draw.line(screen,c.white,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - 15 - (self.font_size-16)])
             else:
-                engine.draw.line(screen,c.black,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - self.font_size])
+                engine.draw.line(screen,c.black,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - 15 - (self.font_size-16)])
             
     
     
@@ -334,7 +347,12 @@ class Label:
     
     def get_text_pixel_length(self,letter_index=None, letter_row = 0):
         """returns text_pixel_length on request"""
-        text_row = self.shown_text.split('\n')[letter_row]
+        shown_text_lines = self.shown_text.split('\n')
+        
+        if shown_text_lines:
+            text_row = shown_text_lines[letter_row]
+        else:
+            text_row = ""
 
         if letter_index is None:
             text_length=self.myfont.size(text_row)[0]
@@ -344,7 +362,8 @@ class Label:
 
     def get_text_pixel_height(self, letter_row=0):
 
-        text_height = self.myfont.size(self.shown_text)[1]*(letter_row + 1)
+        # text_height = self.myfont.size(self.shown_text)[1]*(letter_row + 1)
+        text_height = self.font_size*(letter_row + 1)
 
         return text_height
     
@@ -367,7 +386,7 @@ class Label:
             
             if letter_row > 0:
                 letter_row -= 1
-
+        
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
         total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
         text_length=0
@@ -394,7 +413,7 @@ class Label:
             return(None, letter_row)
     
     def _recalculate_cursor_position(self):
-        if self.cursor_offset_index is not None: #i.e. if cursor exists (it is not correct to put here shown_cursor_offset_index)
+        if self.cursor_offset_index is not None or self.cursor_row_index is not None: #i.e. if cursor exists (it is not correct to put here shown_cursor_offset_index)
             text_length = self.get_text_pixel_length(self.shown_cursor_offset_index, self.shown_cursor_row_index)
             text_height = self.get_text_pixel_height(self.shown_cursor_row_index)
             self.cursor_position=[self.pos[0] + text_length - 1,self.pos[1] + text_height]
@@ -415,9 +434,9 @@ class Label:
         
         
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
+            self.cursor_row_index = self.shown_cursor_row_index
             self.shown_cursor_offset_index, self.shown_cursor_row_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
-            self.cursor_row_index = self.shown_cursor_row_index
             
             if cursor_offset_index_memory is not None:
                 self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
@@ -425,14 +444,14 @@ class Label:
             
         else:
             self.cursor_offset_index=None
-            self.cursor_row_index = 0
+            self.cursor_row_index = None
             self.highlighted_text_indices=None
 
         print("CURSOR POS ", self.cursor_position)
             
             
     def on_key_down(self,event):
-        if self.cursor_offset_index is not None:
+        if (self.cursor_offset_index is not None or self.cursor_row_index is not None) and self.is_interactive_mode_enabled:
             shown_text_rows = self.shown_text.split('\n')
             
             if event.key == engine.K_RIGHT:
@@ -1430,7 +1449,6 @@ class TextArea(TextContainerRect):
     def draw(self,screen):
         # super().draw(screen)
         engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
-        self.label.pos = [self.pos[0]+2,self.pos[1]+4]
         self.blit_text(screen, self.label.text)
 
         for label in self.labels:
@@ -1817,7 +1835,7 @@ class GuiTimeHandler:
     def tick(self):
         self.t=self.t+10
         
-        print(self.t)
+        #print(self.t)
         #print(self.time_triggers)
         #print(self.refresh_period,"PERIOD")
         
@@ -1830,8 +1848,8 @@ class GuiTimeHandler:
             
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
-            print("REFRESH")
-            print([(x.visible,x.pos) for x in self.glc.rects])
+            #print("REFRESH")
+            #print([(x.visible,x.pos) for x in self.glc.rects])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
@@ -2002,12 +2020,12 @@ class GuiLayoutContext:
         #    print("Screen fill - engine disable")
         
         pgw_widgets=[widget for widget_type in self.pgwidgets for widget in widget_type.elements] #fancy double list comprehension
-        print(pgw_widgets)
+        #print(pgw_widgets)
         for i,shape in enumerate(pgw_widgets):
             if shape.visible:
                 draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
                 if "screen" in draw_arguments:
-                    print("SHAPE",shape)
+                    #print("SHAPE",shape)
                     shape.draw(screen) #screen arg - most natural?
                 else:
                     shape.draw()
