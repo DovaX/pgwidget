@@ -767,7 +767,6 @@ class ScrollableComponent:
  
         
     def on_click(self):
-        print("Scrollable component on click")
         pos=engine.mouse.get_pos()
         if self.scrollbar.is_point_in_rectangle(pos):
             self.scrollbar.on_click()
@@ -776,7 +775,6 @@ class ScrollableComponent:
         
     def on_drag(self,offset_pos_y):
         pos=engine.mouse.get_pos()
-        print("SCROLLABLE",pos,offset_pos_y)
         if self.scrollbar.is_clicked: 
             self.scrollbar.on_drag(offset_pos_y) 
             self.handle_offset=self.scrollbar.calculate_handle_offset()
@@ -847,7 +845,6 @@ class Grid(ScrollableComponent):
         return(index)
             
     def deselect_all_cells(self):
-        #print("DESELECTING")
         for index,cell in enumerate(self.table_cells):
             self.table_cells[index].selected=False #redundant at the moment
             self.table_cells[index].label.selected=False
@@ -856,7 +853,6 @@ class Grid(ScrollableComponent):
             
     
     def select_cell(self,selected_cell_index):
-        #print("SELECT CELL",selected_cell_index)
         self.selected_cell_index=selected_cell_index
         #is_outside_index=self.selected_cell_index>=len(self.table_cells)
         #if is_outside_index:
@@ -877,7 +873,6 @@ class Grid(ScrollableComponent):
     def move_selected(self,direction):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
-            #print(i,j)
             if direction==1:
                 target_coordinates=(i,j+1) #right
             if direction==2:
@@ -948,10 +943,8 @@ class Grid(ScrollableComponent):
         self.camera_col_offset #0
         self.rows #25
         self.cols #16
-        #print(target_row_index,self.rows)
         if target_row_index>=self.rows+1: #+1 for header row
             
-            #print("Move cam, branch2")
             self.camera_row_offset+=1
             self.update_data(self.df)
 
