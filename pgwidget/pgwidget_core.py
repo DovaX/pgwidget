@@ -1287,12 +1287,8 @@ class TextContainerRect(DraggableRect,abc.ABC):
         # Entry inherits draw method
 
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
         # print("TRYING DESELECT")
@@ -1335,12 +1331,8 @@ class Entry(TextContainerRect):
             self.labels[0].text = text
         
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
         print("TRYING DESELECT",click_with_shift)
