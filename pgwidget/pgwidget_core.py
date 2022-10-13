@@ -670,6 +670,16 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.scrollbar_handle=ScrollbarHandle([pos[0],pos[1]+15],[size[0],(size[1]-30)],self.percentage)
         self.max_handle_offset=(1-self.percentage)*(size[1]-30)
         self.scrollbar_handle_ratio=0
+
+    def set_position(self, pos):
+        self.pos = pos
+        self.scrollbar_handle.pos = [self.pos[0],self.pos[1]+15]
+
+    def set_size(self, size):
+        ratio = size[1]/self.size[1]
+        self.size = size
+        self.scrollbar_handle.size = [size[0],self.scrollbar_handle.size[1] * ratio]
+        self.max_handle_offset=(1-self.percentage)*(size[1]-30)
     
     def calculate_handle_offset(self): 
         offset=self.scrollbar_handle.pos[1]-self.pos[1]-15
@@ -705,16 +715,29 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         
         if pos[1]>self.pos[1]+self.size[1]-15: #upper arrow
             self.shift_scrollbar(10)
+
+    def move_up(self):
+        self.scrollbar_handle.pos[1] = self.pos[1] + 15
+
+    def move_down(self):
+        self.scrollbar_handle.pos[1] = self.pos[1] + self.size[1] - self.scrollbar_handle.size[1] -15
+
             
     def shift_scrollbar(self,pixel_offset):
         print(pixel_offset)
         self.scrollbar_handle.pos[1]+=pixel_offset
         #check if valid move
-        if self.calculate_handle_ratio_position()<=1 and self.calculate_handle_ratio_position()>=0:
-            pass
-            #Valid
-        else:
-            self.scrollbar_handle.pos[1]-=pixel_offset #Revert back
+        if self.calculate_handle_ratio_position() >1:
+            self.move_down()
+        if self.calculate_handle_ratio_position() < 0:
+            self.move_up()
+        self.calculate_handle_ratio_position()
+
+        # if self.calculate_handle_ratio_position()<=1 and self.calculate_handle_ratio_position()>=0:
+        #     pass
+        #     #Valid
+        # else:
+        #     self.scrollbar_handle.pos[1]-=pixel_offset #Revert back
   
                 
     def on_unclick(self):
@@ -759,7 +782,7 @@ class ScrollableComponent:
     def __init__(self,pos,size,horizontal_offset=-15): 
         self.scrollbar=Scrollbar([pos[0]+size[0]+horizontal_offset,pos[1]],[15,size[1]],0.3)
         self.total_height=size[1]/self.scrollbar.percentage
-        self.handle_offset=0 
+        self.handle_offset=0
         
        
     def draw(self,screen):
@@ -798,8 +821,7 @@ class Grid(ScrollableComponent):
         self.has_scrollbar=True
         self.camera_row_offset=0
         self.camera_col_offset=0
-        
-        
+
         self.table_size=[(self.cell_size[0]+self.margin)*self.cols+int(self.has_scrollbar)*15,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
         self.selected_cell_index=None
@@ -816,6 +838,7 @@ class Grid(ScrollableComponent):
             for i in range(self.rows):    
                 new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
                 self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
+
             
  
     def is_point_in_rectangle(self,pos):
@@ -839,6 +862,37 @@ class Grid(ScrollableComponent):
         row_index=index%(self.rows+1)
         col_index=index//(self.rows+1)
         return(row_index,col_index)
+
+    def resize_table_by_rows_and_cols(self, rows, cols):
+        #will cut/add cols to the right and cut/add rows to the bottom
+
+
+        self.table_cells = []
+        self.cols = cols
+        self.rows = rows
+
+        self._initialize_cells()
+
+
+        self.table_size = [(self.cell_size[0] + self.margin) * self.cols + int(self.has_scrollbar) * 15, (self.cell_size[1] + self.margin) * (self.rows + 1)]
+
+        self.selected_cell_index = None
+
+        self.scrollbar.set_position(pos=[self.pos[0]+self.table_size[0] - 15, self.pos[1]])
+        self.scrollbar.set_size(size=[15,self.table_size[1]])
+
+        self.frame_cell.size = self.table_size
+        # self.df_
+
+        # self.scrollbar.pos = [self.pos[0]+self.table_size[0] - 15, self.pos[1]]
+
+
+    def resize_table_by_size(self, size):
+        new_row_size = size[0]//(self.cell_size[0] + self.margin)
+        new_col_size = size[1]//(self.cell_size[1] + self.margin)
+        self.resize_table_by_rows_and_cols(new_col_size, new_row_size)
+
+
     
     
     def find_cell_index(self,row,col):
@@ -877,15 +931,26 @@ class Grid(ScrollableComponent):
     def move_selected(self,direction):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
-            #print(i,j)
-            if direction==1:
-                target_coordinates=(i,j+1) #right
+
+            if direction==1: #right
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
+                    target_coordinates=(0,0)
+                elif j==self.cols-1:
+                    target_coordinates=(i+1, 0) #last column -> go to next row to first col
+                else:
+                    target_coordinates=(i,j+1)
+
             if direction==2:
                 target_coordinates=(i-1,j) #up
+
             if direction==3:
                 target_coordinates=(i,j-1) #left
+
             if direction==4:
-                target_coordinates=(i+1,j) #down
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
+                    target_coordinates=(0,0)
+                else:
+                    target_coordinates=(i+1,j) #down
             target_cell_index=self.find_cell_index(*target_coordinates) 
             if target_cell_index is not None:
                 self.deselect_all_cells()
@@ -1049,8 +1114,76 @@ class Table(Grid):
         
        
 
-        
-    
+    def resize_table_by_rows_and_cols(self, rows, cols):
+        self.cols = cols
+        self._init_col_width_dict()
+        super().resize_table_by_rows_and_cols(rows, cols)
+
+        self.is_ready_for_updating_df_subset = True
+
+    def move_selected(self,direction):
+
+        if self.df is None:
+            super().move_selected(direction)
+            return
+
+        if self.selected_cell_index is not None:
+            i,j=self.table_cells[self.selected_cell_index].coor
+
+
+            if direction==1: #right
+                if j==self.cols-1 and i==self.rows:
+                    target_coordinates=(0,0)
+                elif j==self.cols-1:
+                    target_coordinates=(i+1, 0)
+                else:
+                    target_coordinates=(i,j+1)
+
+            if direction==2: #up
+                if i==1:
+                    if (self.camera_row_offset) > 0: #last cell in whole grid -> go to first cell
+                        target_coordinates=(i,j)
+                        self.scrollbar.shift_scrollbar(-self.move_scrollbar_by_one_cell())
+                    else:
+                        new_j = (j - 1) % self.cols
+                        target_coordinates = (self.rows, new_j)
+                        self.scrollbar.move_down()
+                    self.scrollbar.calculate_handle_ratio_position()
+                    self.is_ready_for_updating_df_subset = True
+
+                else:
+                    target_coordinates=(i-1, j)
+
+            if direction==3:
+                target_coordinates=(i,j-1) #left
+
+            if direction==4:#down
+                if i==self.rows:
+                    if (self.rows + self.camera_row_offset) < self.df.shape[0]: #last cell in whole grid -> go to first cell
+                        target_coordinates=(i,j)
+                        self.scrollbar.shift_scrollbar(self.move_scrollbar_by_one_cell())
+                    else:
+                        new_j = (j + 1) % self.cols
+                        target_coordinates = (1, new_j)
+                        self.scrollbar.move_up()
+                    self.scrollbar.calculate_handle_ratio_position()
+                    self.is_ready_for_updating_df_subset = True
+
+                else:
+                    target_coordinates=(i+1, j)
+
+            target_cell_index=self.find_cell_index(*target_coordinates)
+            if target_cell_index is not None:
+                self.deselect_all_cells()
+                self.select_cell(target_cell_index)
+            else:
+                print("Move cam, branch")
+                self.move_camera(*target_coordinates)
+
+    def move_scrollbar_by_one_cell(self):
+        scrollbar_range = self.scrollbar.size[1] - self.scrollbar.scrollbar_handle.size[1]
+        one_cell_range = scrollbar_range/(self.df.shape[0] - self.rows)
+        return one_cell_range
     
     def show_data_subset(self,df,row_index=0,col_index=0):
         #a=datetime.datetime.now()
@@ -1078,9 +1211,8 @@ class Table(Grid):
         """data layer"""
         
         self.df=df
-        
-        
-        
+
+
         """TODO: Maybe this could be refactored to not update the whole dataframe, just the view and save some computational power"""
         maximal_row_index_of_top_cell=max(len(self.df)-self.rows,0)  #shouldnt be negative
         normalized_scrollbar_handle_ratio=max(min(self.scrollbar.scrollbar_handle_ratio,1),0)
@@ -1105,7 +1237,7 @@ class Table(Grid):
         for j in range(len(column_names)):
             cell_index=self.find_cell_index(0,j)
             if cell_index is not None:
-                self.table_cells[cell_index].label.text=str(column_names[j])     
+                self.table_cells[cell_index].label.text=str(column_names[j])
         for i in range(min(len(list1), rows)):
             b=datetime.datetime.now()
             #print(i,b-a)
