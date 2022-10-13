@@ -80,7 +80,7 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
     try:
         window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
         pygame.display.set_icon(window_icon)
-    except FileNotFoundError:
+    except (FileNotFoundError,TypeError):
         print("Warning: Icon (icon.png) not found, skipped")
         pass
     
@@ -221,10 +221,10 @@ class Label:
         
     @text.setter
     def text(self,text):
-
-        if not self.is_multiline_label:
-            text = text.replace("\n", " ")
-        
+        if type(text)==str: #handling of NoneType
+            if not self.is_multiline_label:
+                text = text.replace("\n", " ")
+            
         self._text=str(text)
         self.refresh_shown_text()
         self.shown_text_index_offset=len(self._text)-len(self.shown_text)
@@ -767,7 +767,6 @@ class ScrollableComponent:
  
         
     def on_click(self):
-        print("Scrollable component on click")
         pos=engine.mouse.get_pos()
         if self.scrollbar.is_point_in_rectangle(pos):
             self.scrollbar.on_click()
@@ -776,7 +775,6 @@ class ScrollableComponent:
         
     def on_drag(self,offset_pos_y):
         pos=engine.mouse.get_pos()
-        print("SCROLLABLE",pos,offset_pos_y)
         if self.scrollbar.is_clicked: 
             self.scrollbar.on_drag(offset_pos_y) 
             self.handle_offset=self.scrollbar.calculate_handle_offset()
@@ -847,7 +845,6 @@ class Grid(ScrollableComponent):
         return(index)
             
     def deselect_all_cells(self):
-        #print("DESELECTING")
         for index,cell in enumerate(self.table_cells):
             self.table_cells[index].selected=False #redundant at the moment
             self.table_cells[index].label.selected=False
@@ -856,7 +853,6 @@ class Grid(ScrollableComponent):
             
     
     def select_cell(self,selected_cell_index):
-        #print("SELECT CELL",selected_cell_index)
         self.selected_cell_index=selected_cell_index
         #is_outside_index=self.selected_cell_index>=len(self.table_cells)
         #if is_outside_index:
@@ -877,7 +873,6 @@ class Grid(ScrollableComponent):
     def move_selected(self,direction):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
-            #print(i,j)
             if direction==1:
                 target_coordinates=(i,j+1) #right
             if direction==2:
@@ -948,10 +943,8 @@ class Grid(ScrollableComponent):
         self.camera_col_offset #0
         self.rows #25
         self.cols #16
-        #print(target_row_index,self.rows)
         if target_row_index>=self.rows+1: #+1 for header row
             
-            #print("Move cam, branch2")
             self.camera_row_offset+=1
             self.update_data(self.df)
 
@@ -1835,7 +1828,7 @@ class GuiTimeHandler:
     def tick(self):
         self.t=self.t+10
         
-        print(self.t)
+        #print(self.t)
         #print(self.time_triggers)
         #print(self.refresh_period,"PERIOD")
         
@@ -1848,8 +1841,8 @@ class GuiTimeHandler:
             
         if self.t%self.refresh_period==0:
             self.glc.refresh(self.glc.screen)
-            print("REFRESH")
-            print([(x.visible,x.pos) for x in self.glc.rects])
+            #print("REFRESH")
+            #print([(x.visible,x.pos) for x in self.glc.rects])
             """
             for i,rect in enumerate(rects):
                 rect.is_collided()  
@@ -2020,12 +2013,12 @@ class GuiLayoutContext:
         #    print("Screen fill - engine disable")
         
         pgw_widgets=[widget for widget_type in self.pgwidgets for widget in widget_type.elements] #fancy double list comprehension
-        print(pgw_widgets)
+        #print(pgw_widgets)
         for i,shape in enumerate(pgw_widgets):
             if shape.visible:
                 draw_arguments=list(inspect.signature(shape.draw).parameters.keys()) #analyzes if there's glc in the draw function args
                 if "screen" in draw_arguments:
-                    print("SHAPE",shape)
+                    #print("SHAPE",shape)
                     shape.draw(screen) #screen arg - most natural?
                 else:
                     shape.draw()
