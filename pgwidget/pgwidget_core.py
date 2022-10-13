@@ -371,7 +371,11 @@ class Label:
         x_offset=pos[0]-self.pos[0]
         y_offset = pos[1] - self.pos[1]
 
-        shown_text_rows = self.shown_text.split('\n')
+        if self.is_multiline_label:
+            shown_text_rows = self.shown_text.split('\n')
+        else:
+            shown_text_rows = [self.shown_text]
+
         row_count = len(shown_text_rows)
         total_shown_text_height = self.myfont.size(self.shown_text)[1]*row_count
 
@@ -434,9 +438,9 @@ class Label:
         
         
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
-            self.cursor_row_index = self.shown_cursor_row_index
             self.shown_cursor_offset_index, self.shown_cursor_row_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            self.cursor_row_index = self.shown_cursor_row_index
             
             if cursor_offset_index_memory is not None:
                 self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
@@ -452,7 +456,10 @@ class Label:
             
     def on_key_down(self,event):
         if (self.cursor_offset_index is not None or self.cursor_row_index is not None) and self.is_interactive_mode_enabled:
-            shown_text_rows = self.shown_text.split('\n')
+            if self.is_multiline_label:
+                shown_text_rows = self.shown_text.split('\n')
+            else:
+                shown_text_rows = [self.shown_text]
             
             if event.key == engine.K_RIGHT:
                 if self.is_multiline_label:
@@ -485,8 +492,8 @@ class Label:
                     self._move_one_row_down()
         
     def _move_one_row_up(self):
-            self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
-            self.cursor_row_index = self.shown_cursor_row_index
+        self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
+        self.cursor_row_index = self.shown_cursor_row_index
 
     def _move_one_row_down(self):
         shown_text_rows = self.shown_text.split('\n')
