@@ -9,7 +9,7 @@ import inspect
 from helper import c
 import datetime
 import threading
-
+import math
 
 if sys.platform == "darwin":
     import pygame as engine
@@ -155,6 +155,27 @@ class Label:
     def switch_interactive_mode(self):
         self.is_interactive_mode_enabled = not self.is_interactive_mode_enabled    
      
+       
+    def _cut_big_part_of_shown_text(self):
+        ratio = self.max_text_length / self.text_length
+        if ratio < 0.98:  # MAGIC CONSTANT - BETTER CUT BIG PART IN ON SLICE THAN GO ONE AFTER ANOTHER
+            last_char_index = math.floor(ratio * self.text_length)
+
+
+            self.shown_text=self.shown_text[:last_char_index]
+            self.text_length=self.myfont.size(self.shown_text)[0]
+            ratio = self.max_text_length / self.text_length
+        return(ratio)
+        
+    def _cut_shown_text(self):
+        ratio=self._cut_big_part_of_shown_text()
+        if ratio < 1.:
+            while self.text_length>self.max_text_length:
+                if self.selected:
+                    self.shown_text=self.shown_text[1:]
+                else:
+                    self.shown_text=self.shown_text[:-1]
+                self.text_length=self.myfont.size(self.shown_text)[0]
         
     def refresh_shown_text(self):
         if self.is_multiline_label:
@@ -175,22 +196,7 @@ class Label:
         if not self.is_multiline_label and self.text_length > 0:
             if self.max_text_length is not None:
 
-                ratio = self.max_text_length / self.text_length
-                if ratio < 0.98:  # MAGIC CONSTANT - BETTER CUT BIG PART IN ON SLICE THAN GO ONE AFTER ANOTHER
-                    last_char_index = math.floor(ratio * self.text_length)
-
-
-                    self.shown_text=self.shown_text[:last_char_index]
-                    self.text_length=self.myfont.size(self.shown_text)[0]
-                    ratio = self.max_text_length / self.text_length
-
-                if ratio < 1.:
-                    while self.text_length>self.max_text_length:
-                        if self.selected:
-                            self.shown_text=self.shown_text[1:]
-                        else:
-                            self.shown_text=self.shown_text[:-1]
-                        self.text_length=self.myfont.size(self.shown_text)[0]
+                self._cut_shown_text()
         
     def draw(self,screen):
         
