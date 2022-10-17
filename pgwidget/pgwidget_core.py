@@ -278,15 +278,25 @@ class Label:
     
         self.text_length=self.myfont.size(self.shown_text)[0]
 
-        if not self.is_multiline_label:
+        if not self.is_multiline_label and self.text_length > 0:
             if self.max_text_length is not None:
-                
-                while self.text_length>self.max_text_length:
-                    if self.selected:
-                        self.shown_text=self.shown_text[1:]
-                    else:
-                        self.shown_text=self.shown_text[:-1]  
+
+                ratio = self.max_text_length / self.text_length
+                if ratio < 0.98:  # MAGIC CONSTANT - BETTER CUT BIG PART IN ON SLICE THAN GO ONE AFTER ANOTHER
+                    last_char_index = math.floor(ratio * self.text_length)
+
+
+                    self.shown_text=self.shown_text[:last_char_index]
                     self.text_length=self.myfont.size(self.shown_text)[0]
+                    ratio = self.max_text_length / self.text_length
+
+                if ratio < 1.:
+                    while self.text_length>self.max_text_length:
+                        if self.selected:
+                            self.shown_text=self.shown_text[1:]
+                        else:
+                            self.shown_text=self.shown_text[:-1]
+                        self.text_length=self.myfont.size(self.shown_text)[0]
         
     def draw(self,screen):
         
