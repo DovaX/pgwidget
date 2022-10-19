@@ -1,63 +1,25 @@
 import sys
+import os
+import pygame
+import pandas as pd
+from multinherit.multinherit import multi_super
+import tkinter as tk
+import abc
+import inspect
+from helper import c
+import datetime
+import threading
+import math
 
 if sys.platform == "darwin":
     import pygame as engine
 else:
     import pgwidget.engine as engine
 
-
-import pygame
-
-import os
-
-import pandas as pd
-from multinherit.multinherit import multi_super
-
-from helper import c
-
-import datetime
-
 """TKINTER PART"""
-
-import tkinter as tk
-
-import abc
-#from tkinter import LEFT
-
-
-
-import doxyplot.doxyplot_core as dp
-
-
-
-
-
-
-
 root = tk.Tk()
 root.withdraw()
-
-
-
-
-
-"""
-
-WINDOW_SIZE=[1366,768]
-
-embed = tk.Frame(root, width = WINDOW_SIZE[0], height = WINDOW_SIZE[1]) #creates embed frame for pygame window
-embed.grid(columnspan = (600), rowspan = 500) # Adds grid
-#embed.pack(side = LEFT) #packs window to the left
-
-#buttonwin = tk.Frame(root, width = 75, height = 500)
-#buttonwin.pack(side = LEFT)
-
-os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
-os.environ['SDL_VIDEODRIVER'] = 'windib'
-"""
-
 """TKINTER END PART"""
-
 
 def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,768], caption="", window_icon_path=None):
     
@@ -65,8 +27,7 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
         screen = engine.display.set_mode(window_size,engine.RESIZABLE)
     else:
         screen = engine.display.set_mode(window_size)
-       
-        
+              
     engine.init()
     engine.display.set_caption(caption)
     #clock=pygame.time.Clock()
@@ -75,7 +36,6 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
         engine.display.flip()
     except AttributeError: #web has no fill function
         print("Screen fill - engine disable")
-     
         
     try:
         window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
@@ -88,74 +48,8 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
 
 
 #screen=initialize_pg()
-
-"""TKINTER PART"""
-
-"""
-def open_file(): 
-    file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
-    filename=""
-    if file is not None: 
-        content = file.read() 
-        #print(content) 
-        filename=file.name
-        
-    return(filename)
-
-
-
-def run_script_from_file(): 
-    file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
-    filename=""
-    if file is not None: 
-        content = file.read() 
-        #print(content) 
-        filename=file.name
-    os.system("python "+filename) 
-    #return(filename)
-
-global loaded_filename
-
-def open_xlsx_file(*args): 
-    table1=args[0]
-    file = askopenfile(mode ='r', filetypes =[('Excel files', '*.xlsx')]) 
-    filename=""
-    if file is not None: 
-        #content = file.read() 
-        #print(content) 
-        filename=file.name
-    
-    global loaded_filename
-    loaded_filename=filename
-    df=pd.read_excel(loaded_filename)
-    table1.update_data(df)
-    return(filename)
-
-
-def file_save():
-    global text
-    f = asksaveasfile(mode='w', defaultextension=".txt")
-    if f is None: # asksaveasfile return `None` if dialog closed with "cancel".
-        return
-    text2save = str(text.get(1.0, END)) # starts from `1.0`, not `0.0`
-    f.write(text2save)
-    f.close() # `()` was missing.
-
-
-from tkinter import END
-from tkinter.filedialog import askopenfile,asksaveasfile
-
-#button1 = Button(buttonwin,text = 'Draw',  command=open_file)
-#button1.pack(side=LEFT)
-"""
-
-
-
-
 root.update()
     
-"""TKINTER END PART"""
-
 
 class Label:
     def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000,is_cursor_drawing=False, is_multiline_label=False):
@@ -261,6 +155,27 @@ class Label:
     def switch_interactive_mode(self):
         self.is_interactive_mode_enabled = not self.is_interactive_mode_enabled    
      
+       
+    def _cut_big_part_of_shown_text(self):
+        ratio = self.max_text_length / self.text_length
+        if ratio < 0.98:  # MAGIC CONSTANT - BETTER CUT BIG PART IN ON SLICE THAN GO ONE AFTER ANOTHER
+            last_char_index = math.floor(ratio * self.text_length)
+
+
+            self.shown_text=self.shown_text[:last_char_index]
+            self.text_length=self.myfont.size(self.shown_text)[0]
+            ratio = self.max_text_length / self.text_length
+        return(ratio)
+        
+    def _cut_shown_text(self):
+        ratio=self._cut_big_part_of_shown_text()
+        if ratio < 1.:
+            while self.text_length>self.max_text_length:
+                if self.selected:
+                    self.shown_text=self.shown_text[1:]
+                else:
+                    self.shown_text=self.shown_text[:-1]
+                self.text_length=self.myfont.size(self.shown_text)[0]
         
     def refresh_shown_text(self):
         if self.is_multiline_label:
@@ -278,15 +193,10 @@ class Label:
     
         self.text_length=self.myfont.size(self.shown_text)[0]
 
-        if not self.is_multiline_label:
+        if not self.is_multiline_label and self.text_length > 0:
             if self.max_text_length is not None:
-                
-                while self.text_length>self.max_text_length:
-                    if self.selected:
-                        self.shown_text=self.shown_text[1:]
-                    else:
-                        self.shown_text=self.shown_text[:-1]  
-                    self.text_length=self.myfont.size(self.shown_text)[0]
+
+                self._cut_shown_text()
         
     def draw(self,screen):
         
@@ -504,28 +414,14 @@ class Label:
     def get_pixel_length(self):
         text_pixels=self.myfont.size(self.text)[0]
         return(text_pixels)
-        
-"""          
-def refresh(pgwidgets):
-    #TO BE DEPRECATED
-    screen.fill(bg_color)
-        
-    for j,widget_type in enumerate(pgwidgets):
-        for i,widget in enumerate(widget_type.elements):
-            widget.draw(screen)
-"""            
 
- 
-         
+
 class CollidableComponent(abc.ABC):    
     def is_collided(self,rects):
         is_collided_at_least_once=False
         collision_entry = None
         for i in range(len(rects)):
-            if rects[i]!=self:
-                
-                #print("collision")
-                #print(rects[i].pos,self.pos)
+            if rects[i]!=self:      
                 collision=False
                 if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]]):
                     collision=True
@@ -1335,7 +1231,6 @@ class Entry(TextContainerRect):
         super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
-        print("TRYING DESELECT",click_with_shift)
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
         self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
@@ -1735,60 +1630,39 @@ class ComboBox(DraggableRect):
 
 
 class CascadeMenu(Button):
+    
+    """
+    #Inspiration for cascade menu
+    import tkinter as tk
+    
+    def donothing():
+        pass
+    
+    
+    root = tk.Tk()
+    
+    
+    menubar = tk.Menu(root)
+    filemenu = tk.Menu(menubar, tearoff=0)
+    filemenu.add_command(label="New", command=donothing)
+    filemenu.add_command(label="Open", command=donothing)
+    filemenu.add_command(label="Save", command=donothing)
+    filemenu.add_separator()
+    filemenu.add_command(label="Exit", command=root.quit)
+    menubar.add_cascade(label="File", menu=filemenu)
+    
+    helpmenu = tk.Menu(menubar, tearoff=0)
+    helpmenu.add_command(label="Help Index", command=donothing)
+    helpmenu.add_command(label="About...", command=donothing)
+    menubar.add_cascade(label="Help", menu=helpmenu)
+    """
+    
     def __init__(self,pos,size,text,color=(100,100,100),border_color=(0,0,0)):
         super().__init__(pos,size,text,color=color,border_color=border_color)       
 
 
     def draw(self,screen):
         super().draw(screen)
-
-
-"""
-import tkinter as tk
-
-def donothing():
-    pass
-
-
-root = tk.Tk()
-
-
-menubar = tk.Menu(root)
-filemenu = tk.Menu(menubar, tearoff=0)
-filemenu.add_command(label="New", command=donothing)
-filemenu.add_command(label="Open", command=donothing)
-filemenu.add_command(label="Save", command=donothing)
-filemenu.add_separator()
-filemenu.add_command(label="Exit", command=root.quit)
-menubar.add_cascade(label="File", menu=filemenu)
-
-helpmenu = tk.Menu(menubar, tearoff=0)
-helpmenu.add_command(label="Help Index", command=donothing)
-helpmenu.add_command(label="About...", command=donothing)
-menubar.add_cascade(label="Help", menu=helpmenu)
-
-"""
-
-
-
-class DoxyplotImage(ButtonImage,dp.Doxyplot):  
-    """Not used at the moment"""
-    def __init__(self,pos,size,img=None,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
-        multi_super(ButtonImage,self,pos=pos,size=size,img=img,draggable=True)
-        multi_super(dp.Doxyplot,self)
-        #self.selection_count=0
-        
-
-    def plot(self):
-        pass
-    
-    
-    def draw(self,screen):
-        engine.draw.rect(screen,(100,200,100),self.pos+self.size,1)
-        super().draw(screen)
-        
-        
-
 
 
 
@@ -1800,13 +1674,6 @@ class PgWidget:
         self.elements=[]
         self.click_element_function=click_element_function
         print("Warning: PgWidget class will be deprecated in future versions")
-
-
-
-
-import inspect
-
-
 
 
 class TimeTrigger:
@@ -1905,7 +1772,6 @@ class GuiEventHandler:
 
         for i,element in enumerate(self.glc.rects+self.glc.entries+self.glc.tables):
             if element.is_point_in_rectangle(pos):
-                print(element,"CLICKED")
                 #try:
                 element.on_click(self.glc)
                 #except:
@@ -2093,20 +1959,6 @@ class GuiLayoutContext:
         else:
             self.text = self.text[:-1]
 
-
-
-
-
-
-
-
-
-#import time
-#time.sleep(10)
-#if __name__ == "crypto_dashboard":
-
-
-import threading
 
 def remote_main_program_loop(glc,geh,gth):
     """GuiLayoutContext,GuiEventHandler,GuiTimeHandler"""
