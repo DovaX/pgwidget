@@ -66,14 +66,17 @@ class Label:
         self.font_size=font_size
         self.relative_pos=relative_pos
         if "Calibri"==font_type:
-            self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
+            if sys.platform == "darwin":
+                self.myfont = engine.font.Font("fonts/Carlito-Regular.ttf",self.font_size)
+            else:    
+                self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
         elif "Helvetica"==font_type:
             self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
             self.myfont = engine.font.SysFont(self.font_type, self.font_size)
-        self.myfont = engine.font.SysFont(self.font_type, self.font_size)
+        
         self.lbl=self.myfont.render(self.text, True, self.color)
         self.visible=visible
         self.visibility_layer=100
