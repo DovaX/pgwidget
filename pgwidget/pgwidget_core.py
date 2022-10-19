@@ -216,7 +216,6 @@ class Label:
                 pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0], letter_row=self.cursor_row_index)
                 pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1], letter_row=self.cursor_row_index)
                 highlighted_length=abs(pixel_length2-pixel_length)
-                print("HIGHLIGHT",pixel_length,pixel_length2,highlighted_length)
                 
                 engine.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
             try:
@@ -307,13 +306,12 @@ class Label:
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
         total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
         text_length=0
-        print(text_length,total_shown_text_length)
+        
         if x_offset>total_shown_text_length:
             letter_index=len(self.shown_text) #
         else:
             letter_index=0       
             while text_length<x_offset:        
-                print(text_length,x_offset,total_shown_text_length)
                 text_length=self.get_text_pixel_length(letter_index, letter_row)
                 letter_index+=1
             letter_index-=1 # while loop loops incrementing 1 one more time than it should to check stop criterion - this is correction to reference right index in string
@@ -342,7 +340,6 @@ class Label:
         self.visible = True
         pos=engine.mouse.get_pos()
         
-        print("SHIFT",self.cursor_offset_index,click_with_shift)
         if click_with_shift:
             cursor_offset_index_memory=self.cursor_offset_index
             
@@ -586,7 +583,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def calculate_handle_ratio_position(self):
         offset=self.calculate_handle_offset()
         self.scrollbar_handle_ratio=offset/self.max_handle_offset
-        print(self.scrollbar_handle_ratio)
+        
         return(self.scrollbar_handle_ratio)
         
     def draw(self,screen):
@@ -613,7 +610,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
             self.shift_scrollbar(10)
             
     def shift_scrollbar(self,pixel_offset):
-        print(pixel_offset)
+        
         self.scrollbar_handle.pos[1]+=pixel_offset
         #check if valid move
         if self.calculate_handle_ratio_position()<=1 and self.calculate_handle_ratio_position()>=0:
@@ -628,7 +625,6 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=False
                 
     def on_drag(self,offset_pos_y):
-        print(offset_pos_y,engine.mouse.get_pos())
         
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         self.calculate_handle_ratio_position()
