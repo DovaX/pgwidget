@@ -66,7 +66,7 @@ class Label:
         self.font_size=font_size
         self.relative_pos=relative_pos
         if "Calibri"==font_type:
-            if sys.platform == "darwin":
+            if sys.platform == "darwin" or sys.platform == "linux":
                 self.myfont = engine.font.Font("fonts/Carlito-Regular.ttf",self.font_size)
             else:    
                 self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
