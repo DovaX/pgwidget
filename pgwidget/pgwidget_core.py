@@ -66,14 +66,17 @@ class Label:
         self.font_size=font_size
         self.relative_pos=relative_pos
         if "Calibri"==font_type:
-            self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
+            if sys.platform == "darwin" or sys.platform == "linux":
+                self.myfont = engine.font.Font("fonts/Carlito-Regular.ttf",self.font_size)
+            else:    
+                self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
         elif "Helvetica"==font_type:
             self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
             self.myfont = engine.font.SysFont(self.font_type, self.font_size)
-        self.myfont = engine.font.SysFont(self.font_type, self.font_size)
+        
         self.lbl=self.myfont.render(self.text, True, self.color)
         self.visible=visible
         self.visibility_layer=100
@@ -213,7 +216,6 @@ class Label:
                 pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0], letter_row=self.cursor_row_index)
                 pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1], letter_row=self.cursor_row_index)
                 highlighted_length=abs(pixel_length2-pixel_length)
-                print("HIGHLIGHT",pixel_length,pixel_length2,highlighted_length)
                 
                 engine.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
             try:
@@ -281,7 +283,11 @@ class Label:
         x_offset=pos[0]-self.pos[0]
         y_offset = pos[1] - self.pos[1]
 
-        shown_text_rows = self.shown_text.split('\n')
+        if self.is_multiline_label:
+            shown_text_rows = self.shown_text.split('\n')
+        else:
+            shown_text_rows = [self.shown_text]
+
         row_count = len(shown_text_rows)
         total_shown_text_height = self.myfont.size(self.shown_text)[1]*row_count
 
@@ -300,13 +306,12 @@ class Label:
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
         total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
         text_length=0
-        print(text_length,total_shown_text_length)
+        
         if x_offset>total_shown_text_length:
             letter_index=len(self.shown_text) #
         else:
             letter_index=0       
             while text_length<x_offset:        
-                print(text_length,x_offset,total_shown_text_length)
                 text_length=self.get_text_pixel_length(letter_index, letter_row)
                 letter_index+=1
             letter_index-=1 # while loop loops incrementing 1 one more time than it should to check stop criterion - this is correction to reference right index in string
@@ -335,7 +340,6 @@ class Label:
         self.visible = True
         pos=engine.mouse.get_pos()
         
-        print("SHIFT",self.cursor_offset_index,click_with_shift)
         if click_with_shift:
             cursor_offset_index_memory=self.cursor_offset_index
             
@@ -344,9 +348,9 @@ class Label:
         
         
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
-            self.cursor_row_index = self.shown_cursor_row_index
             self.shown_cursor_offset_index, self.shown_cursor_row_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            self.cursor_row_index = self.shown_cursor_row_index
             
             if cursor_offset_index_memory is not None:
                 self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
@@ -362,7 +366,10 @@ class Label:
             
     def on_key_down(self,event):
         if (self.cursor_offset_index is not None or self.cursor_row_index is not None) and self.is_interactive_mode_enabled:
-            shown_text_rows = self.shown_text.split('\n')
+            if self.is_multiline_label:
+                shown_text_rows = self.shown_text.split('\n')
+            else:
+                shown_text_rows = [self.shown_text]
             
             if event.key == engine.K_RIGHT:
                 if self.is_multiline_label:
@@ -395,8 +402,8 @@ class Label:
                     self._move_one_row_down()
         
     def _move_one_row_up(self):
-            self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
-            self.cursor_row_index = self.shown_cursor_row_index
+        self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
+        self.cursor_row_index = self.shown_cursor_row_index
 
     def _move_one_row_down(self):
         shown_text_rows = self.shown_text.split('\n')
@@ -576,7 +583,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def calculate_handle_ratio_position(self):
         offset=self.calculate_handle_offset()
         self.scrollbar_handle_ratio=offset/self.max_handle_offset
-        print(self.scrollbar_handle_ratio)
+        
         return(self.scrollbar_handle_ratio)
         
     def draw(self,screen):
@@ -603,7 +610,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
             self.shift_scrollbar(10)
             
     def shift_scrollbar(self,pixel_offset):
-        print(pixel_offset)
+        
         self.scrollbar_handle.pos[1]+=pixel_offset
         #check if valid move
         if self.calculate_handle_ratio_position()<=1 and self.calculate_handle_ratio_position()>=0:
@@ -618,7 +625,6 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=False
                 
     def on_drag(self,offset_pos_y):
-        print(offset_pos_y,engine.mouse.get_pos())
         
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         self.calculate_handle_ratio_position()
@@ -1176,12 +1182,8 @@ class TextContainerRect(DraggableRect,abc.ABC):
         # Entry inherits draw method
 
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
         # print("TRYING DESELECT")
@@ -1224,12 +1226,8 @@ class Entry(TextContainerRect):
             self.labels[0].text = text
         
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
