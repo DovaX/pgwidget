@@ -69,9 +69,13 @@ class Label:
             if sys.platform == "darwin" or sys.platform == "linux":
                 self.myfont = engine.font.Font("fonts/Carlito-Regular.ttf",self.font_size)
             else:    
-                self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
+                #self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size) #deprecated
+                self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif "Helvetica"==font_type:
-            self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            if sys.platform == "darwin" or sys.platform == "linux":
+                self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            else:    
+                self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
