@@ -783,8 +783,8 @@ class ScrollbarHandle(DraggableRect): #ImprovedDraggableRect
 
 
 class ScrollableComponent:
-    def __init__(self,pos,size,horizontal_offset=-15): 
-        self.scrollbar=Scrollbar([pos[0]+size[0]+horizontal_offset,pos[1]],[15,size[1]],0.3)
+    def __init__(self,pos,size,horizontal_offset=-15, scrollbar_width=15):
+        self.scrollbar=Scrollbar([pos[0]+size[0]+horizontal_offset,pos[1]],[scrollbar_width,size[1]],0.3)
         self.total_height=size[1]/self.scrollbar.percentage
         self.handle_offset=0
         
@@ -826,12 +826,14 @@ class Grid(ScrollableComponent):
         self.camera_row_offset=0
         self.camera_col_offset=0
 
-        self.table_size=[(self.cell_size[0]+self.margin)*self.cols+int(self.has_scrollbar)*self.scrollbar.size[0],(self.cell_size[1]+self.margin)*(self.rows+1)]
+        scrollbar_width = 15
+
+        self.table_size=[(self.cell_size[0]+self.margin)*self.cols+int(self.has_scrollbar)*scrollbar_width,(self.cell_size[1]+self.margin)*(self.rows+1)]
         self.frame_cell=Cell(self.pos,self.table_size,self.frame_cell_color)
         self.selected_cell_index=None
         if type(self)==Grid:
             self._initialize_cells()
-        super().__init__(pos,self.table_size,scrollbar_horizontal_offset)
+        super().__init__(pos,self.table_size,scrollbar_horizontal_offset, scrollbar_width=scrollbar_width)
         
     
     
