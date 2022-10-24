@@ -203,7 +203,6 @@ class Label:
 
         self.is_interactive_mode_enabled = True
         
-        
     @property
     def selected(self):
         return(self._selected)
@@ -590,7 +589,8 @@ class SelectableComponent(abc.ABC):
 class ComponentContainingLabels(abc.ABC):
     @abc.abstractmethod
     def __init__(self):
-        self.labels=[]
+        if not hasattr(self, 'labels'):
+            self.labels=[]
         
         
     def draw_labels(self,screen):
