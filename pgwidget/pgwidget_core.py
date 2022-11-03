@@ -802,8 +802,6 @@ class Grid(ScrollableComponent):
         new_col_size = size[1]//(self.cell_size[1] + self.margin)
         self.resize_table_by_rows_and_cols(new_col_size, new_row_size)
 
-
-    
     
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
@@ -871,7 +869,6 @@ class Grid(ScrollableComponent):
  
         
     def draw(self,screen):
-        
         self.frame_cell.draw(screen)
         
         for i,cell in enumerate(self.table_cells):
