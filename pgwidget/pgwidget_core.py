@@ -840,8 +840,8 @@ class Grid(ScrollableComponent):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
             if direction==1: #right
-                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
-                    target_coordinates=(0,0)
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> don't move
+                    target_coordinates=None
                 elif j==self.cols-1:
                     target_coordinates=(i+1, 0) #last column -> go to next row to first col
                 else:
@@ -854,17 +854,19 @@ class Grid(ScrollableComponent):
                 target_coordinates=(i,j-1) #left
 
             if direction==4:
-                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
-                    target_coordinates=(0,0)
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> don't move
+                    target_coordinates=None
                 else:
                     target_coordinates=(i+1,j) #down
-            target_cell_index=self.find_cell_index(*target_coordinates) 
-            if target_cell_index is not None:
-                self.deselect_all_cells()
-                self.select_cell(target_cell_index)
-            else:
-                print("Move cam, branch")
-                self.move_camera(*target_coordinates)
+                    
+            if target_coordinates is not None:
+                target_cell_index=self.find_cell_index(*target_coordinates) 
+                if target_cell_index is not None:
+                    self.deselect_all_cells()
+                    self.select_cell(target_cell_index)
+                else:
+                    print("Move cam, branch")
+                    self.move_camera(*target_coordinates)
            
  
         
@@ -1028,27 +1030,21 @@ class Table(Grid):
 
 
     def move_selected_right(self, i, j):
-        if j == self.cols - 1 and i == self.rows:
-            target_coordinates = (0, 0)
-
-        elif j == self.cols - 1:
-            target_coordinates = (i + 1, 0)
-
-        else:
-            target_coordinates = (i, j + 1)
+        target_coordinates=(i+(j+1)//self.cols,(j+1)%self.cols)
+        if target_coordinates[0]>=self.rows+1: #+1 because of header row
+            target_coordinates=None
 
         return target_coordinates
 
+
+    # def move_selected_up_or_down(self, i, j):
+    #     if is_
+        
     def move_selected_down(self, i, j):
         if i == self.rows: #if last row
             if (self.rows + self.camera_row_offset) < self.df.shape[0]: #need to check if there are data 'below' – table should be scrolled
                 target_coordinates = (i, j) #if there are, we keep current selected cell and scroll down by one cell
                 self.scrollbar.shift_scrollbar(self.move_scrollbar_by_one_cell())
-
-            else: #if selected cell is in last row selected but df cant be scrolled (no more data)
-                new_j = (j + 1) % self.cols
-                target_coordinates = (1, new_j)
-                self.scrollbar.move_up()
 
             self.is_ready_for_updating_df_subset = True
         else:
@@ -1061,10 +1057,6 @@ class Table(Grid):
             if (self.camera_row_offset) > 0:
                 target_coordinates = (i, j)
                 self.scrollbar.shift_scrollbar(-self.move_scrollbar_by_one_cell())
-            else:
-                new_j = (j - 1) % self.cols
-                target_coordinates = (self.rows, new_j)
-                self.scrollbar.move_down()
 
             self.is_ready_for_updating_df_subset = True
 
@@ -1085,7 +1077,6 @@ class Table(Grid):
             if direction==1: #right
                 target_coordinates=self.move_selected_right(i, j)
 
-
             if direction==2: #up
                 target_coordinates=self.move_selected_up(i, j)
 
@@ -1094,14 +1085,15 @@ class Table(Grid):
 
             if direction==4:#down
                 target_coordinates=self.move_selected_down(i, j)
-
-            target_cell_index=self.find_cell_index(*target_coordinates)
-            if target_cell_index is not None:
-                self.deselect_all_cells()
-                self.select_cell(target_cell_index)
-            else:
-                print("Move cam, branch")
-                self.move_camera(*target_coordinates)
+            print(target_coordinates)
+            if target_coordinates is not None:
+                target_cell_index=self.find_cell_index(*target_coordinates)
+                if target_cell_index is not None:
+                    self.deselect_all_cells()
+                    self.select_cell(target_cell_index)
+                else:
+                    print("Move cam, branch")
+                    self.move_camera(*target_coordinates)
 
     def move_scrollbar_by_one_cell(self):
         scrollbar_range = self.scrollbar.size[1] - self.scrollbar.scrollbar_handle.size[1]
