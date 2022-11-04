@@ -71,7 +71,7 @@ class Label:
             else:    
                 self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
         elif "Helvetica"==font_type:
-            self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            self.myfont = engine.font.Font("fonts/liberation-sans-narrow.ttf",self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
