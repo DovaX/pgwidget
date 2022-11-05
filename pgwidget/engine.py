@@ -80,7 +80,7 @@ class FontEngine:
       
     def Font(self,font_file,font_size):
         if self.engine_type=="desktop":
-            if not (font_file,font_size) in self.stored_fonts:
+            if not (font_file,font_size) in list(self.stored_fonts.keys()):
                 font=pygame.font.Font(font_file,font_size)
                 self.stored_fonts[(font_file,font_size)]=font
             else:
