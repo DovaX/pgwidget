@@ -1,63 +1,25 @@
 import sys
+import os
+import pygame
+import pandas as pd
+from multinherit.multinherit import multi_super
+import tkinter as tk
+import abc
+import inspect
+from helper import c
+import datetime
+import threading
+import math
 
 if sys.platform == "darwin":
     import pygame as engine
 else:
     import pgwidget.engine as engine
 
-
-import pygame
-
-import os
-
-import pandas as pd
-from multinherit.multinherit import multi_super
-
-from helper import c
-
-import datetime
-
 """TKINTER PART"""
-
-import tkinter as tk
-
-import abc
-#from tkinter import LEFT
-
-
-
-import doxyplot.doxyplot_core as dp
-
-
-
-
-
-
-
 root = tk.Tk()
 root.withdraw()
-
-
-
-
-
-"""
-
-WINDOW_SIZE=[1366,768]
-
-embed = tk.Frame(root, width = WINDOW_SIZE[0], height = WINDOW_SIZE[1]) #creates embed frame for pygame window
-embed.grid(columnspan = (600), rowspan = 500) # Adds grid
-#embed.pack(side = LEFT) #packs window to the left
-
-#buttonwin = tk.Frame(root, width = 75, height = 500)
-#buttonwin.pack(side = LEFT)
-
-os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
-os.environ['SDL_VIDEODRIVER'] = 'windib'
-"""
-
 """TKINTER END PART"""
-
 
 def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,768], caption="", window_icon_path=None):
     
@@ -65,8 +27,7 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
         screen = engine.display.set_mode(window_size,engine.RESIZABLE)
     else:
         screen = engine.display.set_mode(window_size)
-       
-        
+              
     engine.init()
     engine.display.set_caption(caption)
     #clock=pygame.time.Clock()
@@ -75,7 +36,6 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
         engine.display.flip()
     except AttributeError: #web has no fill function
         print("Screen fill - engine disable")
-     
         
     try:
         window_icon = engine.image.load(window_icon_path) #e.g. 'src//png//forloop_icon.png'
@@ -88,74 +48,8 @@ def initialize_pg(is_resizable=True, bg_color=(150,150,150), window_size=[1366,7
 
 
 #screen=initialize_pg()
-
-"""TKINTER PART"""
-
-"""
-def open_file(): 
-    file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
-    filename=""
-    if file is not None: 
-        content = file.read() 
-        #print(content) 
-        filename=file.name
-        
-    return(filename)
-
-
-
-def run_script_from_file(): 
-    file = askopenfile(mode ='r', filetypes =[('Python Files', '*.py')]) 
-    filename=""
-    if file is not None: 
-        content = file.read() 
-        #print(content) 
-        filename=file.name
-    os.system("python "+filename) 
-    #return(filename)
-
-global loaded_filename
-
-def open_xlsx_file(*args): 
-    table1=args[0]
-    file = askopenfile(mode ='r', filetypes =[('Excel files', '*.xlsx')]) 
-    filename=""
-    if file is not None: 
-        #content = file.read() 
-        #print(content) 
-        filename=file.name
-    
-    global loaded_filename
-    loaded_filename=filename
-    df=pd.read_excel(loaded_filename)
-    table1.update_data(df)
-    return(filename)
-
-
-def file_save():
-    global text
-    f = asksaveasfile(mode='w', defaultextension=".txt")
-    if f is None: # asksaveasfile return `None` if dialog closed with "cancel".
-        return
-    text2save = str(text.get(1.0, END)) # starts from `1.0`, not `0.0`
-    f.write(text2save)
-    f.close() # `()` was missing.
-
-
-from tkinter import END
-from tkinter.filedialog import askopenfile,asksaveasfile
-
-#button1 = Button(buttonwin,text = 'Draw',  command=open_file)
-#button1.pack(side=LEFT)
-"""
-
-
-
-
 root.update()
     
-"""TKINTER END PART"""
-
 
 class Label:
     def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000,is_cursor_drawing=False, is_multiline_label=False):
@@ -172,14 +66,21 @@ class Label:
         self.font_size=font_size
         self.relative_pos=relative_pos
         if "Calibri"==font_type:
-            self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size)
+            if sys.platform == "darwin" or sys.platform == "linux":
+                self.myfont = engine.font.Font("fonts/Carlito-Regular.ttf",self.font_size)
+            else:    
+                #self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size) #deprecated
+                self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif "Helvetica"==font_type:
-            self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            if sys.platform == "darwin" or sys.platform == "linux":
+                self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            else:    
+                self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
             self.myfont = engine.font.SysFont(self.font_type, self.font_size)
-        self.myfont = engine.font.SysFont(self.font_type, self.font_size)
+        
         self.lbl=self.myfont.render(self.text, True, self.color)
         self.visible=visible
         self.visibility_layer=100
@@ -260,6 +161,27 @@ class Label:
     def switch_interactive_mode(self):
         self.is_interactive_mode_enabled = not self.is_interactive_mode_enabled    
      
+       
+    def _cut_big_part_of_shown_text(self):
+        ratio = self.max_text_length / self.text_length
+        if ratio < 0.98:  # MAGIC CONSTANT - BETTER CUT BIG PART IN ON SLICE THAN GO ONE AFTER ANOTHER
+            last_char_index = math.floor(ratio * self.text_length)
+
+
+            self.shown_text=self.shown_text[:last_char_index]
+            self.text_length=self.myfont.size(self.shown_text)[0]
+            ratio = self.max_text_length / self.text_length
+        return(ratio)
+        
+    def _cut_shown_text(self):
+        ratio=self._cut_big_part_of_shown_text()
+        if ratio < 1.:
+            while self.text_length>self.max_text_length:
+                if self.selected:
+                    self.shown_text=self.shown_text[1:]
+                else:
+                    self.shown_text=self.shown_text[:-1]
+                self.text_length=self.myfont.size(self.shown_text)[0]
         
     def refresh_shown_text(self):
         if self.is_multiline_label:
@@ -277,15 +199,10 @@ class Label:
     
         self.text_length=self.myfont.size(self.shown_text)[0]
 
-        if not self.is_multiline_label:
+        if not self.is_multiline_label and self.text_length > 0:
             if self.max_text_length is not None:
-                
-                while self.text_length>self.max_text_length:
-                    if self.selected:
-                        self.shown_text=self.shown_text[1:]
-                    else:
-                        self.shown_text=self.shown_text[:-1]  
-                    self.text_length=self.myfont.size(self.shown_text)[0]
+
+                self._cut_shown_text()
         
     def draw(self,screen):
         
@@ -302,7 +219,6 @@ class Label:
                 pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0], letter_row=self.cursor_row_index)
                 pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1], letter_row=self.cursor_row_index)
                 highlighted_length=abs(pixel_length2-pixel_length)
-                print("HIGHLIGHT",pixel_length,pixel_length2,highlighted_length)
                 
                 engine.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
             try:
@@ -370,7 +286,11 @@ class Label:
         x_offset=pos[0]-self.pos[0]
         y_offset = pos[1] - self.pos[1]
 
-        shown_text_rows = self.shown_text.split('\n')
+        if self.is_multiline_label:
+            shown_text_rows = self.shown_text.split('\n')
+        else:
+            shown_text_rows = [self.shown_text]
+
         row_count = len(shown_text_rows)
         total_shown_text_height = self.myfont.size(self.shown_text)[1]*row_count
 
@@ -389,13 +309,12 @@ class Label:
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
         total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
         text_length=0
-        print(text_length,total_shown_text_length)
+        
         if x_offset>total_shown_text_length:
             letter_index=len(self.shown_text) #
         else:
             letter_index=0       
             while text_length<x_offset:        
-                print(text_length,x_offset,total_shown_text_length)
                 text_length=self.get_text_pixel_length(letter_index, letter_row)
                 letter_index+=1
             letter_index-=1 # while loop loops incrementing 1 one more time than it should to check stop criterion - this is correction to reference right index in string
@@ -424,7 +343,6 @@ class Label:
         self.visible = True
         pos=engine.mouse.get_pos()
         
-        print("SHIFT",self.cursor_offset_index,click_with_shift)
         if click_with_shift:
             cursor_offset_index_memory=self.cursor_offset_index
             
@@ -433,9 +351,9 @@ class Label:
         
         
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
-            self.cursor_row_index = self.shown_cursor_row_index
             self.shown_cursor_offset_index, self.shown_cursor_row_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
+            self.cursor_row_index = self.shown_cursor_row_index
             
             if cursor_offset_index_memory is not None:
                 self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
@@ -451,7 +369,10 @@ class Label:
             
     def on_key_down(self,event):
         if (self.cursor_offset_index is not None or self.cursor_row_index is not None) and self.is_interactive_mode_enabled:
-            shown_text_rows = self.shown_text.split('\n')
+            if self.is_multiline_label:
+                shown_text_rows = self.shown_text.split('\n')
+            else:
+                shown_text_rows = [self.shown_text]
             
             if event.key == engine.K_RIGHT:
                 if self.is_multiline_label:
@@ -484,8 +405,8 @@ class Label:
                     self._move_one_row_down()
         
     def _move_one_row_up(self):
-            self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
-            self.cursor_row_index = self.shown_cursor_row_index
+        self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
+        self.cursor_row_index = self.shown_cursor_row_index
 
     def _move_one_row_down(self):
         shown_text_rows = self.shown_text.split('\n')
@@ -496,28 +417,14 @@ class Label:
     def get_pixel_length(self):
         text_pixels=self.myfont.size(self.text)[0]
         return(text_pixels)
-        
-"""          
-def refresh(pgwidgets):
-    #TO BE DEPRECATED
-    screen.fill(bg_color)
-        
-    for j,widget_type in enumerate(pgwidgets):
-        for i,widget in enumerate(widget_type.elements):
-            widget.draw(screen)
-"""            
 
- 
-         
+
 class CollidableComponent(abc.ABC):    
     def is_collided(self,rects):
         is_collided_at_least_once=False
         collision_entry = None
         for i in range(len(rects)):
-            if rects[i]!=self:
-                
-                #print("collision")
-                #print(rects[i].pos,self.pos)
+            if rects[i]!=self:      
                 collision=False
                 if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]]):
                     collision=True
@@ -690,7 +597,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
     def calculate_handle_ratio_position(self):
         offset=self.calculate_handle_offset()
         self.scrollbar_handle_ratio=offset/self.max_handle_offset
-        print(self.scrollbar_handle_ratio)
+        
         return(self.scrollbar_handle_ratio)
         
     def draw(self,screen):
@@ -728,7 +635,7 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
 
             
     def shift_scrollbar(self,pixel_offset):
-        print(pixel_offset)
+        
         self.scrollbar_handle.pos[1]+=pixel_offset
         #check if valid move
         if self.calculate_handle_ratio_position() > 1:
@@ -749,7 +656,6 @@ class Scrollbar(DraggableRect): #ImprovedDraggableRect
         self.is_clicked=False
                 
     def on_drag(self,offset_pos_y):
-        print(offset_pos_y,engine.mouse.get_pos())
         
         self.scrollbar_handle.pos=[self.scrollbar_handle.pos[0],offset_pos_y]
         self.calculate_handle_ratio_position()
@@ -896,8 +802,6 @@ class Grid(ScrollableComponent):
         new_col_size = size[1]//(self.cell_size[1] + self.margin)
         self.resize_table_by_rows_and_cols(new_col_size, new_row_size)
 
-
-    
     
     def find_cell_index(self,row,col):
         """Assumes rectangular shape of cells"""
@@ -934,8 +838,8 @@ class Grid(ScrollableComponent):
         if self.selected_cell_index is not None:
             i,j=self.table_cells[self.selected_cell_index].coor
             if direction==1: #right
-                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
-                    target_coordinates=(0,0)
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> don't move
+                    target_coordinates=None
                 elif j==self.cols-1:
                     target_coordinates=(i+1, 0) #last column -> go to next row to first col
                 else:
@@ -948,22 +852,23 @@ class Grid(ScrollableComponent):
                 target_coordinates=(i,j-1) #left
 
             if direction==4:
-                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> go to first cell
-                    target_coordinates=(0,0)
+                if j==self.cols-1 and i==self.rows: #last cell in whole grid -> don't move
+                    target_coordinates=None
                 else:
                     target_coordinates=(i+1,j) #down
-            target_cell_index=self.find_cell_index(*target_coordinates) 
-            if target_cell_index is not None:
-                self.deselect_all_cells()
-                self.select_cell(target_cell_index)
-            else:
-                print("Move cam, branch")
-                self.move_camera(*target_coordinates)
+                    
+            if target_coordinates is not None:
+                target_cell_index=self.find_cell_index(*target_coordinates) 
+                if target_cell_index is not None:
+                    self.deselect_all_cells()
+                    self.select_cell(target_cell_index)
+                else:
+                    print("Move cam, branch")
+                    self.move_camera(*target_coordinates)
            
  
         
     def draw(self,screen):
-        
         self.frame_cell.draw(screen)
         
         for i,cell in enumerate(self.table_cells):
@@ -1122,27 +1027,21 @@ class Table(Grid):
 
 
     def move_selected_right(self, i, j):
-        if j == self.cols - 1 and i == self.rows:
-            target_coordinates = (0, 0)
-
-        elif j == self.cols - 1:
-            target_coordinates = (i + 1, 0)
-
-        else:
-            target_coordinates = (i, j + 1)
+        target_coordinates=(i+(j+1)//self.cols,(j+1)%self.cols)
+        if target_coordinates[0]>=self.rows+1: #+1 because of header row
+            target_coordinates=None
 
         return target_coordinates
 
+
+    # def move_selected_up_or_down(self, i, j):
+    #     if is_
+        
     def move_selected_down(self, i, j):
         if i == self.rows: #if last row
             if (self.rows + self.camera_row_offset) < self.df.shape[0]: #need to check if there are data 'below' – table should be scrolled
                 target_coordinates = (i, j) #if there are, we keep current selected cell and scroll down by one cell
                 self.scrollbar.shift_scrollbar(self.move_scrollbar_by_one_cell())
-
-            else: #if selected cell is in last row selected but df cant be scrolled (no more data)
-                new_j = (j + 1) % self.cols
-                target_coordinates = (1, new_j)
-                self.scrollbar.move_up()
 
             self.is_ready_for_updating_df_subset = True
         else:
@@ -1155,10 +1054,6 @@ class Table(Grid):
             if (self.camera_row_offset) > 0:
                 target_coordinates = (i, j)
                 self.scrollbar.shift_scrollbar(-self.move_scrollbar_by_one_cell())
-            else:
-                new_j = (j - 1) % self.cols
-                target_coordinates = (self.rows, new_j)
-                self.scrollbar.move_down()
 
             self.is_ready_for_updating_df_subset = True
 
@@ -1179,7 +1074,6 @@ class Table(Grid):
             if direction==1: #right
                 target_coordinates=self.move_selected_right(i, j)
 
-
             if direction==2: #up
                 target_coordinates=self.move_selected_up(i, j)
 
@@ -1188,14 +1082,15 @@ class Table(Grid):
 
             if direction==4:#down
                 target_coordinates=self.move_selected_down(i, j)
-
-            target_cell_index=self.find_cell_index(*target_coordinates)
-            if target_cell_index is not None:
-                self.deselect_all_cells()
-                self.select_cell(target_cell_index)
-            else:
-                print("Move cam, branch")
-                self.move_camera(*target_coordinates)
+            print(target_coordinates)
+            if target_coordinates is not None:
+                target_cell_index=self.find_cell_index(*target_coordinates)
+                if target_cell_index is not None:
+                    self.deselect_all_cells()
+                    self.select_cell(target_cell_index)
+                else:
+                    print("Move cam, branch")
+                    self.move_camera(*target_coordinates)
 
     def move_scrollbar_by_one_cell(self):
         scrollbar_range = self.scrollbar.size[1] - self.scrollbar.scrollbar_handle.size[1]
@@ -1437,12 +1332,8 @@ class TextContainerRect(DraggableRect,abc.ABC):
         # Entry inherits draw method
 
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
         # print("TRYING DESELECT")
@@ -1485,15 +1376,10 @@ class Entry(TextContainerRect):
             self.labels[0].text = text
         
 
-    def draw(self, screen):
-        super().draw(screen)
-        for i, label in enumerate(self.labels):
-            # print("Drawing",label.text)
-            # print("Drawing",label.shown_text)
-            label.draw(screen)
+    def draw(self, screen, auto_draw_labels:bool=True):
+        super().draw(screen, auto_draw_labels=auto_draw_labels)
 
     def on_click(self, glc, click_with_shift=False):
-        print("TRYING DESELECT",click_with_shift)
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
         self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
@@ -1893,60 +1779,39 @@ class ComboBox(DraggableRect):
 
 
 class CascadeMenu(Button):
+    
+    """
+    #Inspiration for cascade menu
+    import tkinter as tk
+    
+    def donothing():
+        pass
+    
+    
+    root = tk.Tk()
+    
+    
+    menubar = tk.Menu(root)
+    filemenu = tk.Menu(menubar, tearoff=0)
+    filemenu.add_command(label="New", command=donothing)
+    filemenu.add_command(label="Open", command=donothing)
+    filemenu.add_command(label="Save", command=donothing)
+    filemenu.add_separator()
+    filemenu.add_command(label="Exit", command=root.quit)
+    menubar.add_cascade(label="File", menu=filemenu)
+    
+    helpmenu = tk.Menu(menubar, tearoff=0)
+    helpmenu.add_command(label="Help Index", command=donothing)
+    helpmenu.add_command(label="About...", command=donothing)
+    menubar.add_cascade(label="Help", menu=helpmenu)
+    """
+    
     def __init__(self,pos,size,text,color=(100,100,100),border_color=(0,0,0)):
         super().__init__(pos,size,text,color=color,border_color=border_color)       
 
 
     def draw(self,screen):
         super().draw(screen)
-
-
-"""
-import tkinter as tk
-
-def donothing():
-    pass
-
-
-root = tk.Tk()
-
-
-menubar = tk.Menu(root)
-filemenu = tk.Menu(menubar, tearoff=0)
-filemenu.add_command(label="New", command=donothing)
-filemenu.add_command(label="Open", command=donothing)
-filemenu.add_command(label="Save", command=donothing)
-filemenu.add_separator()
-filemenu.add_command(label="Exit", command=root.quit)
-menubar.add_cascade(label="File", menu=filemenu)
-
-helpmenu = tk.Menu(menubar, tearoff=0)
-helpmenu.add_command(label="Help Index", command=donothing)
-helpmenu.add_command(label="About...", command=donothing)
-menubar.add_cascade(label="Help", menu=helpmenu)
-
-"""
-
-
-
-class DoxyplotImage(ButtonImage,dp.Doxyplot):  
-    """Not used at the moment"""
-    def __init__(self,pos,size,img=None,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True):
-        multi_super(ButtonImage,self,pos=pos,size=size,img=img,draggable=True)
-        multi_super(dp.Doxyplot,self)
-        #self.selection_count=0
-        
-
-    def plot(self):
-        pass
-    
-    
-    def draw(self,screen):
-        engine.draw.rect(screen,(100,200,100),self.pos+self.size,1)
-        super().draw(screen)
-        
-        
-
 
 
 
@@ -1958,13 +1823,6 @@ class PgWidget:
         self.elements=[]
         self.click_element_function=click_element_function
         print("Warning: PgWidget class will be deprecated in future versions")
-
-
-
-
-import inspect
-
-
 
 
 class TimeTrigger:
@@ -2063,7 +1921,6 @@ class GuiEventHandler:
 
         for i,element in enumerate(self.glc.rects+self.glc.entries+self.glc.tables):
             if element.is_point_in_rectangle(pos):
-                print(element,"CLICKED")
                 #try:
                 element.on_click(self.glc)
                 #except:
@@ -2251,20 +2108,6 @@ class GuiLayoutContext:
         else:
             self.text = self.text[:-1]
 
-
-
-
-
-
-
-
-
-#import time
-#time.sleep(10)
-#if __name__ == "crypto_dashboard":
-
-
-import threading
 
 def remote_main_program_loop(glc,geh,gth):
     """GuiLayoutContext,GuiEventHandler,GuiTimeHandler"""
