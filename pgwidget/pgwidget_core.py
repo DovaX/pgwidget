@@ -72,10 +72,11 @@ class Label:
                 #self.myfont = engine.font.Font("fonts/calibri.ttf",self.font_size) #deprecated
                 self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif "Helvetica"==font_type:
-            if sys.platform == "darwin" or sys.platform == "linux":
-                self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
-            else:    
-                self.myfont = engine.font.SysFont(self.font_type, self.font_size)
+            self.myfont = engine.font.Font("fonts/liberation-sans-narrow.ttf",self.font_siz
+            #if sys.platform == "darwin" or sys.platform == "linux":
+            #    self.myfont = engine.font.Font("fonts/helvetica.ttf",self.font_size)
+            #else:    
+            #    self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         elif ".ttf" in font_type:
             self.myfont = engine.font.Font(font_type,self.font_size)
         else:
@@ -262,12 +263,16 @@ class Label:
     
     def get_text_pixel_length(self,letter_index=None, letter_row = 0):
         """returns text_pixel_length on request"""
-        shown_text_lines = self.shown_text.split('\n')
-        
-        if shown_text_lines:
-            text_row = shown_text_lines[letter_row]
+
+        if not self.is_multiline_label:
+            text_row = self.shown_text
         else:
-            text_row = ""
+            shown_text_lines = self.shown_text.split('\n')
+            
+            if shown_text_lines:
+                text_row = shown_text_lines[letter_row]
+            else:
+                text_row = ""
 
         if letter_index is None:
             text_length=self.myfont.size(text_row)[0]
@@ -307,7 +312,10 @@ class Label:
                 letter_row -= 1
         
         # total_shown_text_length=self.myfont.size(self.shown_text)[0]
-        total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
+        try:
+            total_shown_text_length = self.myfont.size(shown_text_rows[letter_row])[0]
+        except:
+            total_shown_text_length = 0
         text_length=0
         
         if x_offset>total_shown_text_length:
