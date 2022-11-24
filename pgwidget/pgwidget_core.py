@@ -1406,7 +1406,7 @@ class Entry(TextContainerRect):
 
 
 class TextArea(TextContainerRect):
-    def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255),is_draggable=False,relative_pos=[0,0],editable_text=True):
+    def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255),is_draggable=False,relative_pos=[0,0],editable_text=True, font_type="Calibri"):
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos)
         
         #super().__init__(pos,size,color,is_draggable=False)
@@ -1415,7 +1415,7 @@ class TextArea(TextContainerRect):
         self.text=text
         self.labels=[]
         # self.labels.append(Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1, is_multiline_label=True))
-        self.labels.append(Label(self.text,(0,0,0),[pos[0] + relative_pos[0] + 2,pos[1] + relative_pos[1] + 4],font_type="Calibri",font_size=15,max_text_length=size[0]-1, is_multiline_label=True))
+        self.labels.append(Label(self.text,(0,0,0),[pos[0] + relative_pos[0] + 2,pos[1] + relative_pos[1] + 4],font_type=font_type,font_size=15,max_text_length=size[0]-1, is_multiline_label=True))
         self.border_color=border_color
         self.color=color
         self.fit_text_to_textarea()
