@@ -107,7 +107,7 @@ class Label:
             self.shown_text_rows = [self.shown_text]
 
         self.is_interactive_mode_enabled = True
-        self.is_row_dimension_changed = False
+        self.is_row_dimension_changed = False ## Used for adjusting scrollbar_handle_size and ratio when the number of rows of multiline label text changes
 
     @property
     def shown_text_first_line_index(self):
@@ -115,11 +115,8 @@ class Label:
 
     @shown_text_first_line_index.setter
     def shown_text_first_line_index(self, shown_text_first_line_index):
-        # index_offset = self._shown_text_first_line_index - shown_text_first_line_index
         self._shown_text_first_line_index = shown_text_first_line_index
         self.refresh_shown_text()
-        # if self._cursor_row_index is not None:
-        #     self.cursor_row_index += index_offset
 
     @property
     def shown_text_last_line_index(self):
@@ -168,8 +165,8 @@ class Label:
     def cursor_offset_index(self,cursor_offset_index):
         if cursor_offset_index is not None:
             self._cursor_offset_index=max(cursor_offset_index,0)
-            if not self.is_multiline_label:
-                self.shown_cursor_offset_index=self._cursor_offset_index-self.shown_text_index_offset
+            # if not self.is_multiline_label:
+            self.shown_cursor_offset_index=self._cursor_offset_index-self.shown_text_index_offset
         else:
             self._cursor_offset_index=None
 
@@ -241,13 +238,8 @@ class Label:
         
     def draw(self,screen):
         
-        
-        #engine.draw.rect(screen,(255,0,0),self.pos+[self.text_length,16])
         if self.is_cursor_drawing and self.is_interactive_mode_enabled:
-            # self._recalculate_cursor_position()
             self._draw_cursor(screen)
-            
-            
         
         if self.visible:
             if self.highlighted_text_indices is not None and self.cursor_position is not None: 
@@ -270,12 +262,9 @@ class Label:
             
     def _draw_cursor(self,screen, color:str ="black"):
         if self.cursor_position is not None:
-            # engine.draw.line(screen,c.black,[self.cursor_position[0],self.pos[1]-2],[self.cursor_position[0],self.pos[1]+15+(self.font_size-16)])
             if color == "white":
-                # engine.draw.line(screen,c.white,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - 15 - (self.font_size-16)])
                 engine.draw.line(screen,c.white,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - self.myfont.size('a')[1]])
             else:
-                # engine.draw.line(screen,c.black,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - 15 - (self.font_size-16)])
                 engine.draw.line(screen,c.black,[self.cursor_position[0],self.cursor_position[1]],[self.cursor_position[0],self.cursor_position[1] - self.myfont.size('a')[1]])
             
     
@@ -1555,17 +1544,14 @@ class TextArea(TextContainerRect):
             if y >= self.label.pos[1] + max_height:
                 break
         
-    def draw(self,screen, draw_cursor=False):
-        # super().draw(screen)
+    def draw(self,screen, auto_draw_cursor=True):
         engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
         self.blit_text(screen, self.label.text)
 
-        if draw_cursor:
+        if auto_draw_cursor:
             for label in self.labels:
                 if label.is_cursor_drawing:
                     label._draw_cursor(screen)
-        #self.label.draw = self.blit_text
-        #self.label.draw(screen, self.label.text)
 
     def fit_text_to_textarea(self):
         words = self.text.split()
@@ -1587,16 +1573,11 @@ class TextArea(TextContainerRect):
         
         
     def on_click(self, glc):
-        # print("TRYING DESELECT")
-        # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
-        # print("SELECTED_CELL",glc.table1.selected_cell_index)
         self.labels[0].on_click(click_around_label_permitted=True)
         super().on_click(glc)
         glc.text = self.text
         glc.selected_entry = self
-        self.selected=True
-        # print("ENTRY CLICKED",self,self.text,self.labels)
-        
+        self.selected=True        
 
     def on_unclick(self, glc):
         self.selected=False
