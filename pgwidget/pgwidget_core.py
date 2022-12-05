@@ -588,7 +588,7 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
             
             if self.has_frame:
                 engine.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
-            self.draw_selection_frame(screen)
+            # self.draw_selection_frame(screen) 
              
             if auto_draw_labels:
                 self.draw_labels(screen)   
