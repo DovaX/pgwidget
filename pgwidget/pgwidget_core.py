@@ -83,23 +83,29 @@ class Label:
             self.myfont = engine.font.SysFont(self.font_type, self.font_size)
         
         self.lbl=self.myfont.render(self.text, True, self.color)
+
+        self.character_height = self.myfont.size("a")[1] # Height of one char [px] (a height is the same for all chars)
+
         self.visible=visible
         self.visibility_layer=100
+
         self.cursor_position=None
         self._cursor_offset_index=None
-        self._cursor_row_index = None
+        self._cursor_row_offset_index = None
+        self.shown_cursor_offset_index=0
+        self.shown_cursor_row_offset_index = 0
         self.is_cursor_drawing=is_cursor_drawing
+
         self.highlighted_text_indices=None #list
         
-        self.shown_text_index_offset=0 #how many letters is the shown text offset against original self.text
+        self.shown_text_index_offset=0 # how many letters is the shown text offset against original self.text --> affects one line labels only!
         self.shown_text=self.text
         self.shown_text_max_length=shown_text_max_length # in letters
-        self._shown_text_first_line_index = 0
-        self._shown_text_last_line_index = len(self.shown_text.split('\n'))
+
+        self.camera_offset = 0
+        self.number_of_shown_text_rows = 1 # ~ camera offset delta
 
         self.selected=False #must be initialized after shown_text_max_length
-        self.shown_cursor_offset_index=0
-        self.shown_cursor_row_index = 0
 
         if self.is_multiline_label:
             self.shown_text_rows = self.shown_text.split('\n')
@@ -108,24 +114,6 @@ class Label:
 
         self.is_interactive_mode_enabled = True
         self.is_row_dimension_changed = False ## Used for adjusting scrollbar_handle_size and ratio when the number of rows of multiline label text changes
-
-    @property
-    def shown_text_first_line_index(self):
-        return self._shown_text_first_line_index
-
-    @shown_text_first_line_index.setter
-    def shown_text_first_line_index(self, shown_text_first_line_index):
-        self._shown_text_first_line_index = shown_text_first_line_index
-        self.refresh_shown_text()
-
-    @property
-    def shown_text_last_line_index(self):
-        return self._shown_text_last_line_index
-
-    @shown_text_last_line_index.setter
-    def shown_text_last_line_index(self, shown_text_last_line_index):
-        self._shown_text_last_line_index = shown_text_last_line_index
-        self.refresh_shown_text()
         
     @property
     def selected(self):
@@ -165,27 +153,31 @@ class Label:
     def cursor_offset_index(self,cursor_offset_index):
         if cursor_offset_index is not None:
             self._cursor_offset_index=max(cursor_offset_index,0)
-            # if not self.is_multiline_label:
+            
             self.shown_cursor_offset_index=self._cursor_offset_index-self.shown_text_index_offset
         else:
             self._cursor_offset_index=None
 
-        if self.shown_cursor_row_index is not None and 0 <= self.shown_cursor_row_index < len(self.shown_text_rows):
+        # Recalculate the cursor position only if cursor_row_offset_index is in the safe range [0, shown_text_lines)
+        # --> the cursor can get 'out of bounds' of the shown text when scrolling
+        if self.shown_cursor_row_offset_index is not None and 0 <= self.shown_cursor_row_offset_index < len(self.shown_text_rows):
             self._recalculate_cursor_position() #TODO: add on_drag
      
     @property
-    def cursor_row_index(self):
-        return(self._cursor_row_index)
+    def cursor_row_offset_index(self):
+        return(self._cursor_row_offset_index)
     
-    @cursor_row_index.setter
-    def cursor_row_index(self,cursor_row_index):
-        if cursor_row_index is not None:
-            self._cursor_row_index = max(cursor_row_index, 0)
-            self.shown_cursor_row_index = self._cursor_row_index - self.shown_text_first_line_index
+    @cursor_row_offset_index.setter
+    def cursor_row_offset_index(self,cursor_row_offset_index):
+        if cursor_row_offset_index is not None:
+            self._cursor_row_offset_index = max(cursor_row_offset_index, 0)
+            self.shown_cursor_row_offset_index = self._cursor_row_offset_index - self.camera_offset
         else:
-            self._cursor_row_index = None
+            self._cursor_row_offset_index = None
         
-        if self.shown_cursor_row_index is not None and 0 <= self.shown_cursor_row_index < len(self.shown_text_rows):
+        # Recalculate the cursor position only if cursor_row_offset_index is in the safe range [0, shown_text_lines)
+        # --> the cursor can get 'out of bounds' of the shown text when scrolling
+        if self.shown_cursor_row_offset_index is not None and 0 <= self.shown_cursor_row_offset_index < len(self.shown_text_rows):
             self._recalculate_cursor_position() #TODO: add on_drag 
 
 
@@ -221,7 +213,8 @@ class Label:
                 if len(row) > self.shown_text_max_length:
                     self.shown_text_rows[i] = row[:self.shown_text_max_length]
                     self.shown_text_rows[i+1] = row[self.shown_text_max_length:] + self.shown_text_rows[i+1]
-            self.shown_text_rows = self.shown_text_rows[self.shown_text_first_line_index: self.shown_text_last_line_index + 1]
+            
+            self.shown_text_rows = self.shown_text_rows[self.camera_offset: self.camera_offset + self.number_of_shown_text_rows + 1]
             self.shown_text = '\n'.join(self.shown_text_rows)
         else:
             if len(self._text)>self.shown_text_max_length:
@@ -244,8 +237,8 @@ class Label:
         if self.visible:
             if self.highlighted_text_indices is not None and self.cursor_position is not None: 
                 
-                pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0], letter_row=self.cursor_row_index)
-                pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1], letter_row=self.cursor_row_index)
+                pixel_length=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[0], letter_row=self.cursor_row_offset_index)
+                pixel_length2=self.get_text_pixel_length(letter_index=self.highlighted_text_indices[1], letter_row=self.cursor_row_offset_index)
                 highlighted_length=abs(pixel_length2-pixel_length)
                 
                 engine.draw.rect(screen,(0,0,200),self.cursor_position+[highlighted_length,20])
@@ -314,9 +307,9 @@ class Label:
     def get_text_pixel_height(self, letter_row=0):
 
         if self.shown_text:
-            # text_rows_heights = [self.myfont.size(text_line)[1] for text_line in self.shown_text[:letter_row + 1]]
-            text_rows_heights = [self.myfont.size('a')[1] for text_line in self.shown_text[:letter_row + 1]]
-            text_height = sum(text_rows_heights)
+            # text_rows_heights = [self.myfont.size('a')[1] for text_line in self.shown_text[:letter_row + 1]]
+            # text_height = sum(text_rows_heights)
+            text_height = (letter_row + 1) * self.character_height
         else:
             text_height = self.font_size*(letter_row + 1)
 
@@ -380,11 +373,10 @@ class Label:
             return(None, letter_row)
     
     def _recalculate_cursor_position(self):
-        if self.cursor_offset_index is not None or self.cursor_row_index is not None: #i.e. if cursor exists (it is not correct to put here shown_cursor_offset_index)
-            text_length = self.get_text_pixel_length(self.shown_cursor_offset_index, self.shown_cursor_row_index)
-            text_height = self.get_text_pixel_height(self.shown_cursor_row_index)
+        if self.cursor_offset_index is not None or self.cursor_row_offset_index is not None: #i.e. if cursor exists (it is not correct to put here shown_cursor_offset_index)
+            text_length = self.get_text_pixel_length(self.shown_cursor_offset_index, self.shown_cursor_row_offset_index)
+            text_height = self.get_text_pixel_height(self.shown_cursor_row_offset_index)
             
-            # init_height = self.get_text_pixel_height(self.shown_text_first_line_index - 1) if self.shown_text_first_line_index > 0 else 0
             self.cursor_position=[self.pos[0] + text_length - 1,self.pos[1] + text_height]
         else:
             self.cursor_position=None
@@ -402,9 +394,9 @@ class Label:
         
         
         if self.is_point_in_rectangle(pos) or click_around_label_permitted:
-            self.shown_cursor_offset_index, self.shown_cursor_row_index = self._round_cursor_position_to_nearest_letter(pos)
+            self.shown_cursor_offset_index, self.shown_cursor_row_offset_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
-            self.cursor_row_index = self.shown_cursor_row_index + self.shown_text_first_line_index
+            self.cursor_row_offset_index = self.shown_cursor_row_offset_index + self.camera_offset
             
             if cursor_offset_index_memory is not None:
                 self.highlighted_text_indices=sorted([self.cursor_offset_index,cursor_offset_index_memory])
@@ -412,12 +404,12 @@ class Label:
             
         else:
             self.cursor_offset_index=None
-            self.cursor_row_index = None
+            self.cursor_row_offset_index = None
             self.highlighted_text_indices=None
             
             
     def on_key_down(self,event):
-        if (self.cursor_offset_index is not None or self.cursor_row_index is not None) and self.is_interactive_mode_enabled:
+        if (self.cursor_offset_index is not None or self.cursor_row_offset_index is not None) and self.is_interactive_mode_enabled:
             if self.is_multiline_label:
                 shown_text_rows = self.shown_text.split('\n')
             else:
@@ -425,20 +417,20 @@ class Label:
             
             if event.key == engine.K_RIGHT:
                 if self.is_multiline_label:
-                    if self.shown_cursor_offset_index + 1 > len(shown_text_rows[self.shown_cursor_row_index]):
+                    if self.shown_cursor_offset_index + 1 > len(shown_text_rows[self.shown_cursor_row_offset_index]):
                         self._move_one_row_down()
                         self.shown_cursor_offset_index = 0
                     else:
                         self.shown_cursor_offset_index += 1
                 else:
-                    self.shown_cursor_offset_index = min(self.shown_cursor_offset_index + 1, len(shown_text_rows[self.shown_cursor_row_index]))
+                    self.shown_cursor_offset_index = min(self.shown_cursor_offset_index + 1, len(shown_text_rows[self.shown_cursor_row_offset_index]))
                 self.cursor_offset_index = self.shown_cursor_offset_index + self.shown_text_index_offset          
                 
             elif event.key == engine.K_LEFT:  
                 if self.is_multiline_label:
                     if self.shown_cursor_offset_index - 1 < 0:
                         self._move_one_row_up()
-                        self.shown_cursor_offset_index = len(shown_text_rows[self.shown_cursor_row_index])
+                        self.shown_cursor_offset_index = len(shown_text_rows[self.shown_cursor_row_offset_index])
                     else:
                         self.shown_cursor_offset_index -= 1
                 else:
@@ -454,19 +446,17 @@ class Label:
                     self._move_one_row_down()
         
     def _move_one_row_up(self):
-        self.shown_cursor_row_index = max(self.shown_cursor_row_index - 1, 0)
-        # self.cursor_row_index = self.shown_cursor_row_index
-        self.cursor_row_index = self.shown_cursor_row_index + self.shown_text_first_line_index
-        if self.shown_cursor_offset_index > len(self.shown_text_rows[self.shown_cursor_row_index]):
-            self.shown_cursor_offset_index = len(self.shown_text_rows[self.shown_cursor_row_index])
+        self.shown_cursor_row_offset_index = max(self.shown_cursor_row_offset_index - 1, 0)
+        self.cursor_row_offset_index = self.shown_cursor_row_offset_index + self.camera_offset
+        if self.shown_cursor_offset_index > len(self.shown_text_rows[self.shown_cursor_row_offset_index]):
+            self.shown_cursor_offset_index = len(self.shown_text_rows[self.shown_cursor_row_offset_index])
 
     def _move_one_row_down(self):
         shown_text_rows = self.shown_text.split('\n')
-        self.shown_cursor_row_index = min(self.shown_cursor_row_index + 1, len(shown_text_rows) - 1)
-        # self.cursor_row_index = self.shown_cursor_row_index
-        self.cursor_row_index = self.shown_cursor_row_index + self.shown_text_first_line_index
-        if self.shown_cursor_offset_index > len(self.shown_text_rows[self.shown_cursor_row_index]):
-            self.shown_cursor_offset_index = len(self.shown_text_rows[self.shown_cursor_row_index])
+        self.shown_cursor_row_offset_index = min(self.shown_cursor_row_offset_index + 1, len(shown_text_rows) - 1)
+        self.cursor_row_offset_index = self.shown_cursor_row_offset_index + self.camera_offset
+        if self.shown_cursor_offset_index > len(self.shown_text_rows[self.shown_cursor_row_offset_index]):
+            self.shown_cursor_offset_index = len(self.shown_text_rows[self.shown_cursor_row_offset_index])
         
             
     def get_pixel_length(self):
@@ -1545,6 +1535,11 @@ class TextArea(TextContainerRect):
                 break
         
     def draw(self,screen, auto_draw_cursor=True):
+        """
+        auto_draw_cursor: bool ... decides if the cursor will be drawn in this layer 
+                                    (used mainly when the class is inherited --> cursor is being drawn in the child class 
+                                        --> drawing it in parent classes is often unnecessary)
+        """
         engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)
         self.blit_text(screen, self.label.text)
 
