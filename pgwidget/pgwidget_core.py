@@ -553,7 +553,7 @@ class ComponentContainingLabels(abc.ABC):
    
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
-    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red):
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red, is_highlighted=False, highlight_color=c.red):
         multi_super(SelectableComponent,self,selection_color=selection_color)
         multi_super(ComponentContainingLabels,self)
         self.pos=pos
@@ -569,6 +569,9 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         self.relative_pos=relative_pos
         self.has_frame=has_frame
         self.fill_color=fill_color #Fills the 
+        
+        self.is_highlighted=is_highlighted
+        self.highlight_color=highlight_color
          
     def draw(self,screen,auto_draw_labels=True): 
         #Warning: Image descendant does not inherit draw method
@@ -576,7 +579,11 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
             if self.fill_color:
                 engine.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
             
-            if self.has_frame:
+            
+            if self.is_highlighted:
+                engine.draw.rect(screen,self.highlight_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+                
+            elif self.has_frame:
                 engine.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
             # self.draw_selection_frame(screen) 
              
