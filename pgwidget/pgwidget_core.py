@@ -1227,7 +1227,7 @@ class Table(Grid):
     
 
 class ButtonImage(DraggableRect):
-    def __init__(self,pos,size,img,text="",function=lambda *args:None,draggable=False): #default: do nothing function
+    def __init__(self,pos,size,img,text="",function=lambda *args:None,function_args=None,draggable=False): #default: do nothing function
         super().__init__(pos,size,c.black,is_draggable=draggable)    
         self.pos=pos
         self.size=size
@@ -1235,6 +1235,7 @@ class ButtonImage(DraggableRect):
         
         self.rescale()
         self.function=function
+        self.function_args = function_args
         self.animation_index=0
         self.animation_drawings_per_frame=5
         self.animation_drawings_index=0
@@ -1258,8 +1259,13 @@ class ButtonImage(DraggableRect):
         else: #static img
             screen.blit(self.img,self.pos)
         
-    def run_function(self):
-        self.function()
+    def run_function(self,*args):
+        if len(args)>0:
+            self.function(args)
+        elif self.function_args is not None:
+            self.function(self.function_args)
+        else:
+            self.function()
 
 
 def save_df(table1):
