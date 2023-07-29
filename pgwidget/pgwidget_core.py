@@ -52,7 +52,7 @@ root.update()
     
 
 class Label:
-    def __init__(self,text,color=(0,0,0),pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=14,max_text_length=None,visible=True,shown_text_max_length=1000,is_cursor_drawing=False, is_multiline_label=False):
+    def __init__(self,text,color=c.black,pos=[0,0],relative_pos=[0,0],font_type="Calibri",font_size=12,max_text_length=None,visible=True,shown_text_max_length=1000,is_cursor_drawing=False, is_multiline_label=False):
         """
         shown_text_max_length = 1000 ... default because of rendering speed
         """
@@ -553,7 +553,7 @@ class ComponentContainingLabels(abc.ABC):
    
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
-    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red):
+    def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red, is_highlighted=False, highlight_color=c.red):
         multi_super(SelectableComponent,self,selection_color=selection_color)
         multi_super(ComponentContainingLabels,self)
         self.pos=pos
@@ -569,6 +569,9 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         self.relative_pos=relative_pos
         self.has_frame=has_frame
         self.fill_color=fill_color #Fills the 
+        
+        self.is_highlighted=is_highlighted
+        self.highlight_color=highlight_color
          
     def draw(self,screen,auto_draw_labels=True): 
         #Warning: Image descendant does not inherit draw method
@@ -576,7 +579,11 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
             if self.fill_color:
                 engine.draw.rect(screen,self.color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])   
             
-            if self.has_frame:
+            
+            if self.is_highlighted:
+                engine.draw.rect(screen,self.highlight_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
+                
+            elif self.has_frame:
                 engine.draw.rect(screen,self.frame_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1) 
             # self.draw_selection_frame(screen) 
              
@@ -594,7 +601,7 @@ class Cell(DraggableRect):
     def __init__(self,pos,size,color,coor=[0,0],relative_pos=[0,0]):
         super().__init__(pos,size,color,is_draggable=False,has_frame=False)
         self.coor=coor
-        self.label=Label("",(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
+        self.label=Label("",c.black,[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1)
                 
     @property
     def text(self):
@@ -799,7 +806,7 @@ class Grid(ScrollableComponent):
             i=0
             for i in range(self.rows):    
                 new_pos=[self.pos[0]+j*self.cell_size[0]+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
-                self.table_cells.append(Cell(new_pos,self.cell_size,(255,255,255),coor=[i,j]))
+                self.table_cells.append(Cell(new_pos,self.cell_size,c.white,coor=[i,j]))
 
             
  
@@ -940,7 +947,7 @@ class Grid(ScrollableComponent):
         if self.selected_cell_index is not None:
             cell=self.table_cells[self.selected_cell_index]
             engine.draw.rect(screen,(33,115,70),[cell.pos[0]-2+1,cell.pos[1]-2+1,cell.size[0]+3-1,cell.size[1]+3-1],2) 
-            engine.draw.rect(screen,(255,255,255),[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
+            engine.draw.rect(screen,c.white,[cell.pos[0]+cell.size[0]-3,cell.pos[1]+cell.size[1]-3,6,6],2) 
             engine.draw.rect(screen,(33,115,70),[cell.pos[0]+cell.size[0]-2,cell.pos[1]+cell.size[1]-2,5,5]) 
         
         
@@ -1055,7 +1062,7 @@ class Table(Grid):
             self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],self.header_color,coor=[i,j]))
             for i in range(1,self.rows+1):    
                 new_pos=[self.pos[0]+cumulative_x_pos+j*self.margin,self.pos[1]+i*self.cell_size[1]+i*self.margin]
-                self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],(255,255,255),coor=[i,j]))
+                self.table_cells.append(Cell(new_pos,[self.col_width_dict[j],self.cell_size[1]],c.white,coor=[i,j]))
             
             cumulative_x_pos+=self.col_width_dict[j]
             
@@ -1221,7 +1228,7 @@ class Table(Grid):
 
 class ButtonImage(DraggableRect):
     def __init__(self,pos,size,img,text="",function=lambda *args:None,draggable=False): #default: do nothing function
-        super().__init__(pos,size,(0,0,0),is_draggable=draggable)    
+        super().__init__(pos,size,c.black,is_draggable=draggable)    
         self.pos=pos
         self.size=size
         self.img=img
@@ -1262,7 +1269,7 @@ def save_df(table1):
 class RadioButton(DraggableRect):
     def __init__(self,pos,text,radio_group,selected=False):
         self.size=[20,20]
-        super().__init__(pos,self.size,(0,0,0),is_draggable=False)
+        super().__init__(pos,self.size,c.black,is_draggable=False)
         self.pos=pos
         self.text=text
         self.radio_group=radio_group
@@ -1297,7 +1304,7 @@ class RadioButton(DraggableRect):
 class CheckBox(DraggableRect):
     def __init__(self, pos, relative_pos=[0,0], selected=False,color=c.forloop_lighter,):
         self.size=[18,18]
-        super().__init__(pos,self.size,(0,0,0),is_draggable=False,relative_pos=relative_pos)
+        super().__init__(pos,self.size,c.black,is_draggable=False,relative_pos=relative_pos)
         self.pos=pos
         self.selected=selected
         try:
@@ -1450,7 +1457,7 @@ class Entry(TextContainerRect):
 
 
 class TextArea(TextContainerRect):
-    def __init__(self,pos,size,text,border_color=(0,0,0),color=(255,255,255),is_draggable=False,relative_pos=[0,0],editable_text=True, font_type="Calibri", font_size=15):
+    def __init__(self,pos,size,text,border_color=c.black,color=c.white,is_draggable=False,relative_pos=[0,0],editable_text=True, font_type="Calibri", font_size=15):
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos)
         
         #super().__init__(pos,size,color,is_draggable=False)
@@ -1459,7 +1466,7 @@ class TextArea(TextContainerRect):
         self.text=text
         self.labels=[]
         # self.labels.append(Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1, is_multiline_label=True))
-        self.labels.append(Label(self.text,(0,0,0),[pos[0] + relative_pos[0] + 2,pos[1] + relative_pos[1] + 4],font_type=font_type,font_size=font_size,max_text_length=size[0]-1, is_multiline_label=True))
+        self.labels.append(Label(self.text,c.black,[pos[0] + relative_pos[0] + 2,pos[1] + relative_pos[1] + 4],font_type=font_type,font_size=font_size,max_text_length=size[0]-1, is_multiline_label=True))
         self.border_color=border_color
         self.color=color
         self.fit_text_to_textarea()
@@ -1510,7 +1517,7 @@ class TextArea(TextContainerRect):
     def label(self,label):
         self.labels[0]=label
 
-    def blit_text(self, surface, text, color=(0,0,0)):
+    def blit_text(self, surface, text, color=c.black):
         words = [word.split(' ') for word in self.label.text.splitlines()]
         space = self.label.myfont.size(' ')[0]
         max_height = self.size[1]-10
@@ -1581,14 +1588,14 @@ class TextArea(TextContainerRect):
 
 
 class Button(DraggableRect):
-    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=(0,0,0),color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=(0,0,0)):
+    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=c.black,color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=c.black):
         super().__init__(pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
         self.border_color=border_color
         self.color=color
         self.text=text
-        self.label=Label(self.text,(0,0,0),[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1,relative_pos=[2,4])
+        self.label=Label(self.text,c.black,[pos[0]+2,pos[1]+4],font_type="Calibri",font_size=15,max_text_length=size[0]-1,relative_pos=[2,4])
         self.function=function
         self.is_clicked=False
         self.function_args=function_args
@@ -1638,7 +1645,7 @@ class Button(DraggableRect):
         
 
 class ComboBox(DraggableRect):
-    def __init__(self, pos, size, values, text=None, color=(212,212,212), border_color=(0,0,0),hover_color=(120,120,120),hover_label_color=(0,0,0),relative_pos=[0,0]):
+    def __init__(self, pos, size, values, text=None, color=(212,212,212), border_color=c.black,hover_color=c.grey,hover_label_color=c.black,relative_pos=[0,0]):
         super().__init__(pos, size, color, is_draggable=False)
         self.values = values
         #self.text = text
@@ -1704,9 +1711,9 @@ class ComboBox(DraggableRect):
                 engine.draw.rect(screen,self.color,self.cell.pos+self.cell.size)    
                 self.cell.draw(screen)
                 engine.draw.rect(screen,self.border_color,self.cell.pos+self.cell.size,1)
-                engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
-                engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
-                #engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-15,self.pos[1]+self.size[1]/2-2],[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],3)
+                engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-10,self.pos[1]+self.size[1]/2+3],[self.pos[0]+self.size[0]-5,self.pos[1]+self.size[1]/2-2],3)
+                #engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                 
             if self._is_rolled:
                 pos=engine.mouse.get_pos()
@@ -1729,15 +1736,15 @@ class ComboBox(DraggableRect):
                 engine.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1]+index*option_height,self.size[0],option_height])    
                 self._cells[index-1].label.color=self.hover_label_color
                 self._cells[index-1].label.draw(screen)
-                self._cells[index-1].label.color=(0,0,0)
+                self._cells[index-1].label.color=c.black
                 
     def _draw_multiselect_crosses(self,screen):
         if self.multiselect_indices is not None:
             for multiselect_index,value in self.multiselect_indices.items(): 
                 if value!=self.multiselect_values[-1]: #i.e. value!=False
-                    engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-8    ,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
-                    engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-8,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
-                    #engine.draw.line(screen,(0,0,0),[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
+                    engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-8    ,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
+                    engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-8,self.pos[1]+self.size[1]*(1/4+multiselect_index)+3],[self.pos[0]+self.size[0]-12,self.pos[1]+self.size[1]*(1/4+multiselect_index)+7],2)
+                    #engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                     
 
     
@@ -1856,7 +1863,7 @@ class CascadeMenu(Button):
     menubar.add_cascade(label="Help", menu=helpmenu)
     """
     
-    def __init__(self,pos,size,text,color=(100,100,100),border_color=(0,0,0)):
+    def __init__(self,pos,size,text,color=(100,100,100),border_color=c.black):
         super().__init__(pos,size,text,color=color,border_color=border_color)       
 
 
@@ -1917,12 +1924,12 @@ class GuiTimeHandler:
             
         for i,trigger in enumerate(self.time_triggers):
             if self.t%trigger.frequency==0:
-                print("TRIGGER EXECUTED")
+                #print("TRIGGER EXECUTED")
                 if trigger.args is not None:
                     trigger.function(trigger.args)
                 else:
                     trigger.function()
-                    print("Trigger executed")
+                    #print("Trigger executed")
                 
         engine.time.wait(10)
         
