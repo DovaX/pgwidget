@@ -350,8 +350,7 @@ class Label:
         text_length=0
         
         if x_offset>total_shown_text_length:
-            # letter_index=len(self.shown_text) 
-            letter_index = len(shown_text_rows[letter_row])
+            letter_index = len(shown_text_rows[letter_row]) if shown_text_rows else 0
         else:
             letter_index=0       
             while text_length<x_offset:        
