@@ -24,7 +24,7 @@ pgw.main_program_loop(pgwidgets,None)
 ```
 
 In examples folder you can get several GUI elements.
-## Examples what UI is possible to create with pgwidget
+## Examples of UIs possible to create with pgwidget
 Project Forloop.ai
 ![obrazek](https://github.com/DovaX/pgwidget/assets/29150831/789131c7-8789-4e09-841c-79250c209dc2)
 ![obrazek](https://github.com/DovaX/pgwidget/assets/29150831/6d7a9239-a31f-44c6-b1d9-caa56a21f55e)
