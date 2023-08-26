@@ -6,7 +6,7 @@ from multinherit.multinherit import multi_super
 import tkinter as tk
 import abc
 import inspect
-from helper import c
+from pgwidget.helper import c
 import datetime
 import threading
 import math
