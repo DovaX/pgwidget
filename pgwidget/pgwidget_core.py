@@ -1140,7 +1140,7 @@ class Table(Grid):
 
             if direction==4:#down
                 target_coordinates=self.move_selected_down(i, j)
-            print(target_coordinates)
+            #print(target_coordinates)
             if target_coordinates is not None:
                 target_cell_index=self.find_cell_index(*target_coordinates)
                 if target_cell_index is not None:
@@ -1199,7 +1199,7 @@ class Table(Grid):
         
         self.subset_df=self.show_data_subset(df,self.camera_row_offset,self.camera_col_offset)
         if subset_df_memory is not None:
-            print(subset_df_memory.shape,"x",self.subset_df.shape)
+            #print(subset_df_memory.shape,"x",self.subset_df.shape)
             if subset_df_memory.shape!=self.subset_df.shape:
                 self.table_cells=[]
                 self._initialize_cells() #computationally heavy - can take even 0.1s, thus refresh only if df changes shape
