@@ -6,7 +6,7 @@ from multinherit.multinherit import multi_super
 import tkinter as tk
 import abc
 import inspect
-from helper import c
+from pgwidget.helper import c
 import datetime
 import threading
 import math
@@ -350,8 +350,7 @@ class Label:
         text_length=0
         
         if x_offset>total_shown_text_length:
-            # letter_index=len(self.shown_text) 
-            letter_index = len(shown_text_rows[letter_row])
+            letter_index = len(shown_text_rows[letter_row]) if shown_text_rows else 0
         else:
             letter_index=0       
             while text_length<x_offset:        
