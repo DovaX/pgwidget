@@ -1,4 +1,4 @@
-from pgwidget_core import (initialize_pg, 
+from pgwidget.pgwidget_core import (initialize_pg, 
                            DraggableRect, 
                            Label, 
                            CollidableComponent, 
