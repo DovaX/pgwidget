@@ -1192,20 +1192,10 @@ class Table(Grid):
         
         
         
-        if hasattr(self,"subset_df"):
-            subset_df_memory=self.subset_df
-        else:
-            subset_df_memory=None
         
         self.subset_df=self.show_data_subset(df,self.camera_row_offset,self.camera_col_offset)
-        if subset_df_memory is not None:
-            #print(subset_df_memory.shape,"x",self.subset_df.shape)
-            if subset_df_memory.shape!=self.subset_df.shape:
-                self.table_cells=[]
-                self._initialize_cells() #computationally heavy - can take even 0.1s, thus refresh only if df changes shape
-        else:
-            self.table_cells=[]
-            self._initialize_cells() #computationally heavy - can take even 0.1s, thus refresh only if df changes shape
+        self.table_cells=[]
+        self._initialize_cells()
         if rows is None:
             rows = self.subset_df.shape[0]
         
