@@ -1587,7 +1587,9 @@ class TextArea(TextContainerRect):
 
 
 class Button(DraggableRect):
-    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=c.black,color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=c.black):
+    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,
+                 border_color=c.black,color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),
+                 hover_label_color=c.black, fix_horizontal_position: bool = False, fix_vertical_position: bool = False):
         super().__init__(pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
@@ -1603,6 +1605,8 @@ class Button(DraggableRect):
         self.visibility_layer=100
         self.hover_color=hover_color
         self.hover_label_color=hover_label_color
+        self.fix_horizontal_position = fix_horizontal_position
+        self.fix_vertical_position = fix_vertical_position
         
 
         
