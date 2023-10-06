@@ -984,9 +984,15 @@ class Grid(ScrollableComponent):
 
 
 
-class Table(Grid):
-    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15):
-        super().__init__(pos,cell_size,rows,cols,margin=margin,frame_cell_color=frame_cell_color,frame_border_width=frame_border_width,scrollbar_horizontal_offset=scrollbar_horizontal_offset)
+class Table(Grid, RelativePositionManager):
+    def __init__(self,pos,cell_size,rows,cols,margin=1,include_header=True,frame_cell_color=(212,212,212),
+                 header_color=(230,230,230),frame_border_width=2,col_width_dict={},scrollbar_horizontal_offset=-15,
+                 position_relative_to_screen: Optional[list[int]] = None):
+        Grid.__init__(self,pos,cell_size,rows,cols,margin=margin,frame_cell_color=frame_cell_color,
+                         frame_border_width=frame_border_width,scrollbar_horizontal_offset=scrollbar_horizontal_offset)
+        RelativePositionManager.__init__(self, position_relative_to_screen=position_relative_to_screen)
+        # self.relative_position_manager = RelativePositionManager(relative_position=relative_position)
+        
         self.include_header=include_header
         
         self.header_color=header_color
@@ -1587,8 +1593,10 @@ class TextArea(TextContainerRect):
 
 
 class Button(DraggableRect):
-    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=c.black,color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),hover_label_color=c.black):
-        super().__init__(pos,size,color,is_draggable=False)
+    def __init__(self,pos,size,text,function=lambda *args:None,function_args=None,border_color=c.black,
+                 color=(200,200,200),relative_pos=[0,0],visible=True,hover_color=(120,120,120),
+                 hover_label_color=c.black, fix_horizontal_position: bool = False, fix_vertical_position: bool = False):
+        DraggableRect.__init__(self,pos,size,color,is_draggable=False)
         self.pos=pos
         self.size=size
         self.border_color=border_color
