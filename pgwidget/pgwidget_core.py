@@ -1420,8 +1420,8 @@ class TextContainerRect(DraggableRect,abc.ABC):
         
 
 class Entry(TextContainerRect):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False,selection_color=c.red):
-        self.is_password=is_password #must be initialized before text definition (in super())
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],type='text',selection_color=c.red):
+        self.type=type #must be initialized before text definition (in super())
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
         self.labels = [Label(text, c.black)]
         self.is_child = False
@@ -1436,7 +1436,7 @@ class Entry(TextContainerRect):
     @text.setter
     def text(self, text):
         self._text = text
-        if self.is_password:   
+        if self.type == 'password':
             self._asterisk_text="".join(len(self._text)*["*"])
             self.labels[0].text = self._asterisk_text
         else:
