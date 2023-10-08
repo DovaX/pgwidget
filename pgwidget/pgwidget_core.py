@@ -4,6 +4,7 @@ import pygame
 import pandas as pd
 from multinherit.multinherit import multi_super
 import tkinter as tk
+from tkinter.filedialog import askopenfile
 import abc
 import inspect
 from helper import c
@@ -1453,6 +1454,11 @@ class Entry(TextContainerRect):
     def on_click(self, glc, click_with_shift=False):
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        if self.type == 'file':
+            file = askopenfile(mode='r', filetypes=self.file_types)
+            if file is not None:
+                self.text = file.name
+            
         self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
         super().on_click(glc)
         glc.text = self.text
