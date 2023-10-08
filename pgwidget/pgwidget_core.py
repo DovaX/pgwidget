@@ -1420,9 +1420,12 @@ class TextContainerRect(DraggableRect,abc.ABC):
         
 
 class Entry(TextContainerRect):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],type='text',selection_color=c.red):
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],type='text',selection_color=c.red, file_types=None):
         self.type=type #must be initialized before text definition (in super())
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
+        if file_types is None:
+            file_types = []
+        self.file_types = file_types
         self.labels = [Label(text, c.black)]
         self.is_child = False
         self.relative_pos = relative_pos
