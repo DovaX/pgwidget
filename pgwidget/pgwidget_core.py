@@ -1428,6 +1428,10 @@ class Entry(TextContainerRect):
             file_types = []
         self.file_types = file_types
         self.labels = [Label(text, c.black)]
+
+        if type == 'file':
+            self.labels[0].is_interactive_mode_enabled = False
+
         self.is_child = False
         self.relative_pos = relative_pos
         
