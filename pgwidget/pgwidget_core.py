@@ -1422,6 +1422,19 @@ class TextContainerRect(DraggableRect,abc.ABC):
 
 class Entry(TextContainerRect):
     def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],type='text',selection_color=c.red, file_types=None):
+        """Element representing text entry
+
+        Args:
+            text (_type_): _description_
+            pos (_type_): _description_
+            size (_type_): _description_
+            color (_type_, optional): _description_. Defaults to c.white.
+            is_draggable (bool, optional): _description_. Defaults to True.
+            relative_pos (list, optional): _description_. Defaults to [0, 0].
+            type (str, optional): Alters entry behaviour, similar to html input. One of 'text', 'password', 'file'. Defaults to 'text'.
+            selection_color (_type_, optional): _description_. Defaults to c.red.
+            file_types (_type_, optional): _description_. Defaults to None.
+        """
         self.type=type #must be initialized before text definition (in super()) (setting text in supper calls text.setter in this class which needs self.type)
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
         if file_types is None:
