@@ -1438,7 +1438,7 @@ class Entry(TextContainerRect):
         self.type=type #must be initialized before text definition (in super()) (setting text in supper calls text.setter in this class which needs self.type)
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
         if file_types is None:
-            file_types = []
+            file_types = [("all files", "*")]
         self.file_types = file_types
         self.labels = [Label(text, c.black)]
 
