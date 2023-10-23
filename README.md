@@ -1,6 +1,6 @@
 # pgwidget
 
-pgwidget is a Python library for easy creation of GUI widgets in pygame environment.
+pgwidget is a Python library for easy creation of GUI widgets in pygame environment (+web engine experimental).
 
 ## Installation
 
