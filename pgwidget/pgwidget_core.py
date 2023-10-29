@@ -4,6 +4,7 @@ import pygame
 import pandas as pd
 from multinherit.multinherit import multi_super
 import tkinter as tk
+from tkinter.filedialog import askopenfile
 import abc
 import inspect
 from helper import c
@@ -1420,10 +1421,30 @@ class TextContainerRect(DraggableRect,abc.ABC):
         
 
 class Entry(TextContainerRect):
-    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],is_password=False,selection_color=c.red):
-        self.is_password=is_password #must be initialized before text definition (in super())
+    def __init__(self, text, pos, size, color=c.white, is_draggable=True, relative_pos=[0, 0],type='text',selection_color=c.red, file_types=None):
+        """Element representing text entry
+
+        Args:
+            text (_type_): _description_
+            pos (_type_): _description_
+            size (_type_): _description_
+            color (_type_, optional): _description_. Defaults to c.white.
+            is_draggable (bool, optional): _description_. Defaults to True.
+            relative_pos (list, optional): _description_. Defaults to [0, 0].
+            type (str, optional): Alters entry behaviour, similar to html input. One of 'text', 'password', 'file'. Defaults to 'text'.
+            selection_color (_type_, optional): _description_. Defaults to c.red.
+            file_types (_type_, optional): _description_. Defaults to None.
+        """
+        self.type=type #must be initialized before text definition (in super()) (setting text in supper calls text.setter in this class which needs self.type)
         super().__init__(text, pos, size, color=color, is_draggable=is_draggable, relative_pos=relative_pos,selection_color=selection_color)
+        if file_types is None:
+            file_types = [("all files", "*")]
+        self.file_types = file_types
         self.labels = [Label(text, c.black)]
+
+        if type == 'file':
+            self.labels[0].is_interactive_mode_enabled = False
+
         self.is_child = False
         self.relative_pos = relative_pos
         
@@ -1436,7 +1457,7 @@ class Entry(TextContainerRect):
     @text.setter
     def text(self, text):
         self._text = text
-        if self.is_password:   
+        if self.type == 'password':
             self._asterisk_text="".join(len(self._text)*["*"])
             self.labels[0].text = self._asterisk_text
         else:
@@ -1450,6 +1471,11 @@ class Entry(TextContainerRect):
     def on_click(self, glc, click_with_shift=False):
         # glc.table1.deselect_all_cells() #deselect cells in order to be able to write in Entry
         # print("SELECTED_CELL",glc.table1.selected_cell_index)
+        if self.type == 'file':
+            file = askopenfile(mode='r', filetypes=self.file_types)
+            if file is not None:
+                self.text = file.name
+            
         self.labels[0].on_click(click_around_label_permitted=True,click_with_shift=click_with_shift)
         super().on_click(glc)
         glc.text = self.text
