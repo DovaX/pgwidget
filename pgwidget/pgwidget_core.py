@@ -596,7 +596,7 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
         else:
             return(False)
         
-    def get_middle_point(self, pos):
+    def get_middle_point(self):
         return([self.pos[0]+self.size[0]//2,self.pos[1]+self.size[1]//2])
         
     

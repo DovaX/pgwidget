@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     
 setuptools.setup(
     name='pgwidget',
-    version='0.7.8',
+    version='0.7.9',
     author='DovaX',
     author_email='dovax.ai@gmail.com',
     description='Widgets for pygame',
