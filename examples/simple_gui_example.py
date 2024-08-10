@@ -52,8 +52,8 @@ glc.labels.append(pgw.Label("",(0,0,0),pos=[100,360],font_size=16))
 glc.labels.append(pgw.Label("",(0,0,0),pos=[100,390],font_size=16))
 
 
-glc.entries.append(pgw.PgwEntry("",[500,500],[100,30]))
-glc.entries.append(pgw.PgwEntry("",[500,535],[100,30]))
+glc.entries.append(pgw.Entry("",[500,500],[100,30]))
+glc.entries.append(pgw.Entry("",[500,535],[100,30]))
 
 
 glc.labels.append(pgw.Label("Name",(0,0,0),pos=[400,500],font_size=16))
