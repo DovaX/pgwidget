@@ -11,6 +11,7 @@ from helper import c
 import datetime
 import threading
 import math
+from typing import Literal
 
 if sys.platform == "darwin":
     import pygame as engine
@@ -550,7 +551,58 @@ class ComponentContainingLabels(abc.ABC):
             if label.visible:
                 label.pos=[self.pos[0]+label.relative_pos[0]+5,self.pos[1]+label.relative_pos[1]+5]
                 label.draw(screen)
-   
+
+    
+
+
+class Point:
+    def __init__(self, pos, color = c.red, radius = 1, width = 0):
+        self.pos = pos
+        self.color = color
+        self.radius = radius
+        self.width = width
+        
+    def draw(self, screen):
+        engine.draw.circle(screen, self.color, self.pos, self.radius, self.width)
+        
+        
+
+
+
+class Line:
+    def __init__(self, pos1, pos2, color = c.red, width = 1):
+        
+        self.pos1 = pos1
+        self.pos2 = pos2
+        self.color = color
+        self.width = width
+        
+    def draw(self, screen):
+        engine.draw.line(screen, self.color, self.pos1, self.pos2, self.width)
+        
+    
+    def get_pixel_length(self):
+        return(math.sqrt((self.pos1[0]-self.pos2)**2+(self.pos1[1]-self.pos2[1])))
+
+
+    def get_percentage_ratio_of_line(self, pos, axis: Literal["x","y"] = "x"):
+        """Returns value between 0 and 1 if position 'pos' is between the pos1 and pos2, if it is outside the line it can be greater than 1 or lower than 0"""
+        if axis == "x":
+            percentage_ratio = (pos[0]-self.pos1[0])/(self.pos2[0] - self.pos1[0])
+            
+        elif axis == "y":
+            percentage_ratio = (pos[1]-self.pos1[1])/(self.pos2[1] - self.pos1[1])
+        else:
+            raise(Exception)
+            
+        return(percentage_ratio)
+    
+    def get_pos_based_on_percentage_ratio(self, percentage_ratio):
+        
+        x=self.pos1[0]+percentage_ratio*(self.pos2[0]-self.pos1[0])
+        y=self.pos1[0]+percentage_ratio*(self.pos2[0]-self.pos1[0])
+        pos = [x,y]
+        return(pos)
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
     def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red, is_highlighted=False, highlight_color=c.red):
