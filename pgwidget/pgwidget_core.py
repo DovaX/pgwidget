@@ -264,9 +264,12 @@ class Label:
             
     
     
+    def is_point_in_rectangle(self, pos):
+        """To be deprecated when more objects are introduced"""
+        print("Deprecation Warning: is_point_in_rectangle was replaced by is_point_inside and is going to be deprecated in future version of Pgwidget")
+        self.is_point_inside(pos)
     
-    def is_point_in_rectangle(self,pos):
-        
+    def is_point_inside(self, pos):
         self.text_length=self.myfont.size(self.shown_text)[0]
         if pos[0]<self.pos[0]+self.text_length and self.pos[0]<pos[0] and pos[1]<self.pos[1]+16 and self.pos[1]<pos[1]:
             return(True)
@@ -394,7 +397,7 @@ class Label:
             cursor_offset_index_memory=None
         
         
-        if self.is_point_in_rectangle(pos) or click_around_label_permitted:
+        if self.is_point_inside(pos) or click_around_label_permitted:
             self.shown_cursor_offset_index, self.shown_cursor_row_offset_index = self._round_cursor_position_to_nearest_letter(pos)
             self.cursor_offset_index=self.shown_cursor_offset_index+self.shown_text_index_offset
             self.cursor_row_offset_index = self.shown_cursor_row_offset_index + self.camera_offset
@@ -472,21 +475,21 @@ class CollidableComponent(abc.ABC):
         for i in range(len(rects)):
             if rects[i]!=self:      
                 collision=False
-                if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]]):
+                if self.is_point_inside([rects[i].pos[0],rects[i].pos[1]]):
                     collision=True
-                if self.is_point_in_rectangle([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]]):
+                if self.is_point_inside([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]]):
                     collision=True
-                if self.is_point_in_rectangle([rects[i].pos[0],rects[i].pos[1]+rects[i].size[1]]):
+                if self.is_point_inside([rects[i].pos[0],rects[i].pos[1]+rects[i].size[1]]):
                     collision=True
-                if self.is_point_in_rectangle([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]+rects[i].size[1]]):
+                if self.is_point_inside([rects[i].pos[0]+rects[i].size[0],rects[i].pos[1]+rects[i].size[1]]):
                     collision=True
-                if rects[i].is_point_in_rectangle([self.pos[0],self.pos[1]]):
+                if rects[i].is_point_inside([self.pos[0],self.pos[1]]):
                     collision=True
-                if rects[i].is_point_in_rectangle([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
+                if rects[i].is_point_inside([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
                     collision=True
-                if rects[i].is_point_in_rectangle([self.pos[0],self.pos[1]]):
+                if rects[i].is_point_inside([self.pos[0],self.pos[1]]):
                     collision=True
-                if rects[i].is_point_in_rectangle([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
+                if rects[i].is_point_inside([self.pos[0]+self.size[0],self.pos[1]+self.size[1]]):
                     collision=True
                     
                     
@@ -606,6 +609,7 @@ class Line:
     
     def is_point_in_rectangle(self, pos):
         """To be deprecated when more objects are introduced"""
+        print("Deprecation Warning: is_point_in_rectangle was replaced by is_point_inside and is going to be deprecated in future version of Pgwidget")
         self.is_point_inside(pos)
     
     def is_point_inside(self, pos):
@@ -649,7 +653,12 @@ class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingL
             if auto_draw_labels:
                 self.draw_labels(screen)   
     
-    def is_point_in_rectangle(self,pos):
+    def is_point_in_rectangle(self, pos):
+        """To be deprecated when more objects are introduced"""
+        print("Deprecation Warning: is_point_in_rectangle was replaced by is_point_inside and is going to be deprecated in future version of Pgwidget")
+        self.is_point_inside(pos)
+    
+    def is_point_inside(self, pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.size[1]:
             return(True)
         else:
@@ -823,7 +832,7 @@ class ScrollableComponent:
         
     def on_click(self):
         pos=engine.mouse.get_pos()
-        if self.scrollbar.is_point_in_rectangle(pos):
+        if self.scrollbar.is_point_inside(pos):
             self.scrollbar.on_click()
             self.handle_offset = self.scrollbar.calculate_handle_offset()
             
@@ -872,8 +881,12 @@ class Grid(ScrollableComponent):
                 self.table_cells.append(Cell(new_pos,self.cell_size,c.white,coor=[i,j]))
 
             
- 
-    def is_point_in_rectangle(self,pos):
+    def is_point_in_rectangle(self, pos):
+        """To be deprecated when more objects are introduced"""
+        print("Deprecation Warning: is_point_in_rectangle was replaced by is_point_inside and is going to be deprecated in future version of Pgwidget")
+        self.is_point_inside(pos)
+    
+    def is_point_inside(self, pos):
         if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.table_size[0] and self.pos[1]<pos[1] and pos[1]<self.pos[1]+self.table_size[1]:
             return(True)
         else:
@@ -950,7 +963,7 @@ class Grid(ScrollableComponent):
             
     
     def highlight_selected(self,pos):
-        if self.is_point_in_rectangle(pos):
+        if self.is_point_inside(pos):
             i,j=self.which_cell_is_clicked(pos)
             selected_cell_index=self.find_cell_index(i,j)
             self.deselect_all_cells()
@@ -1021,10 +1034,10 @@ class Grid(ScrollableComponent):
     
    
     def on_click(self,pos):
-        if self.is_point_in_rectangle(pos):
+        if self.is_point_inside(pos):
             self.which_cell_is_clicked(pos)
             self.highlight_selected(pos)
-            if self.scrollbar.is_point_in_rectangle(pos):
+            if self.scrollbar.is_point_inside(pos):
                 self.scrollbar.on_click()
                  
     def on_unclick(self):
@@ -1399,7 +1412,7 @@ class CheckBox(DraggableRect):
     
     def on_click(self):
         pos=engine.mouse.get_pos()
-        if self.is_point_in_rectangle(pos):
+        if self.is_point_inside(pos):
             self.selected = not self.selected
     
     def draw(self,screen):
@@ -1719,7 +1732,7 @@ class Button(DraggableRect):
             self.on_hover(screen,pos)
     
     def on_hover(self,screen,pos):
-        if self.is_point_in_rectangle(pos):
+        if self.is_point_inside(pos):
             engine.draw.rect(screen,self.hover_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]])  
             engine.draw.rect(screen,self.border_color,[self.pos[0],self.pos[1],self.size[0],self.size[1]],1)  
             
@@ -1845,10 +1858,14 @@ class ComboBox(DraggableRect):
                     #engine.draw.line(screen,c.black,[self.pos[0]+self.size[0]-18,self.pos[1]],[self.pos[0]+self.size[0]-18,self.pos[1]+self.size[1]],1)
                     
 
+    def is_point_in_rectangle(self, pos):
+        """To be deprecated when more objects are introduced"""
+        print("Deprecation Warning: is_point_in_rectangle was replaced by is_point_inside and is going to be deprecated in future version of Pgwidget")
+        self.is_point_inside(pos)
     
-    def is_point_in_rectangle(self,pos):
+    def is_point_inside(self, pos):
         if not self._is_rolled:
-            result=super().is_point_in_rectangle(pos)
+            result=super().is_point_inside(pos)
             return(result)
         else:
             if self.pos[0]<pos[0] and pos[0]<self.pos[0]+self.size[0] and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
@@ -1864,7 +1881,7 @@ class ComboBox(DraggableRect):
         if self._is_rolled and self.pos[1] < pos[1] and pos[1] < self.pos[1] + self.size[1] * (len(self.values) + 1):
             self.choose(pos)
             
-        elif not self._is_rolled and self.is_point_in_rectangle(pos):
+        elif not self._is_rolled and self.is_point_inside(pos):
             self.roll()
             
             
@@ -2061,21 +2078,21 @@ class GuiEventHandler:
                         if widget._is_rolled and widget.pos[1] < pos[1] and pos[1] < widget.pos[1] + widget.size[1] * (
                                 len(widget.values) + 1):
                             widget.choose(pos)
-                        elif not widget._is_rolled and widget.is_point_in_rectangle(pos):
+                        elif not widget._is_rolled and widget.is_point_inside(pos):
                             widget.choose(pos)
                         else:
                             pass
 
                     elif type(widget) == Button:
-                        if widget.is_point_in_rectangle(pos):
+                        if widget.is_point_inside(pos):
                             self.glc.pgwidgets[i].elements[j].is_clicked = True
 
                     elif type(widget) == Table:
-                        if widget.is_point_in_rectangle(pos):
+                        if widget.is_point_inside(pos):
                             self.actively_selected_draggable_component = widget
 
         for i,element in enumerate(self.glc.rects+self.glc.entries+self.glc.tables):
-            if element.is_point_in_rectangle(pos):
+            if element.is_point_inside(pos):
                 #try:
                 element.on_click(self.glc)
                 #except:
