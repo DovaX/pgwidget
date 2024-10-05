@@ -603,6 +603,13 @@ class Line:
         y=self.pos1[0]+percentage_ratio*(self.pos2[0]-self.pos1[0])
         pos = [x,y]
         return(pos)
+    
+    def is_point_in_rectangle(self, pos):
+        """To be deprecated when more objects are introduced"""
+        self.is_point_inside(pos)
+    
+    def is_point_inside(self, pos):
+        return(False) #line doesn't have inner area
 
 class DraggableRect(CollidableComponent,SelectableComponent,ComponentContainingLabels):
     def __init__(self,pos,size,color,is_draggable=True,frame_color=c.frame,relative_pos=[0,0],has_frame=True,fill_color:bool=True,selection_color=c.red, is_highlighted=False, highlight_color=c.red):
