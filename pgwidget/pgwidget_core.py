@@ -579,6 +579,8 @@ class Line:
         self.pos2 = pos2
         self.color = color
         self.width = width
+        self.visibility_layer = 100
+        self.visible = True
         
     def draw(self, screen):
         engine.draw.line(screen, self.color, self.pos1, self.pos2, self.width)
