@@ -564,13 +564,34 @@ class Point:
         self.color = color
         self.radius = radius
         self.width = width
+        self.visibility_layer = 100
+        self.visible = True
         
     def draw(self, screen):
         engine.draw.circle(screen, self.color, self.pos, self.radius, self.width)
         
+
+    def is_point_inside(self, pos):
+        return(False) #line doesn't have inner area        
+
+
+class PointOnLine(Point):
+    def __init__(self, line, percentage, color = c.red, radius = 1, width = 0):
+        self.line = line
+        self.move_point(percentage)
+        super().__init__(self.pos, color = color, radius = radius, width = width)
+
+    def move_point(self, percentage):
+        self.percentage = percentage
+        x = self.line.pos1[0] + (self.line.pos2[0]-self.line.pos1[0])*percentage
+        y = self.line.pos1[1] + (self.line.pos2[1]-self.line.pos1[1])*percentage
+        self.pos = [x,y]
         
-
-
+    
+    def move_point_incrementally(self, percentage):
+        
+        self.percentage += percentage
+        self.move_point(self.percentage)
 
 class Line:
     def __init__(self, pos1, pos2, color = c.red, width = 1):

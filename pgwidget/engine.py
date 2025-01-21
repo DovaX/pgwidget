@@ -363,7 +363,11 @@ class DrawEngine:
         
         #draw.image(screen,image) #,pos,size
         
-       
+    def circle(self,screen,color,center,radius=1,width=0):
+         if self.engine_type=="desktop":
+             pygame.draw.circle(screen,color,center,radius,width)
+             
+            
 
     
 class EventEngine:
