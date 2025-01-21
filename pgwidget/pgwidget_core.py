@@ -578,20 +578,31 @@ class Point:
 class PointOnLine(Point):
     def __init__(self, line, percentage, color = c.red, radius = 1, width = 0):
         self.line = line
-        self.move_point(percentage)
+        self.move_point_to_line_percentage(percentage)
         super().__init__(self.pos, color = color, radius = radius, width = width)
 
-    def move_point(self, percentage):
+    def move_point_to_line_percentage(self, percentage):
         self.percentage = percentage
         x = self.line.pos1[0] + (self.line.pos2[0]-self.line.pos1[0])*percentage
         y = self.line.pos1[1] + (self.line.pos2[1]-self.line.pos1[1])*percentage
         self.pos = [x,y]
         
-    
-    def move_point_incrementally(self, percentage):
+    def move_point_by_line_percentage(self, percentage, allow_outside_line = False):
+        
         
         self.percentage += percentage
-        self.move_point(self.percentage)
+        
+        if not allow_outside_line and (self.percentage > 1 or self.percentage < 0):
+            self.percentage = min(max(self.percentage,0),1)
+            
+        self.move_point_to_line_percentage(self.percentage)
+
+    def move_point_by_pixel_distance(self, pixel_distance, allow_outside_line = False):
+        line_pixel_length = self.line.get_pixel_length()
+        if line_pixel_length > 0:
+            percentage = pixel_distance / line_pixel_length
+            self.move_point_by_line_percentage(percentage, allow_outside_line)
+        
 
 class Line:
     def __init__(self, pos1, pos2, color = c.red, width = 1):
@@ -608,7 +619,7 @@ class Line:
         
     
     def get_pixel_length(self):
-        return(math.sqrt((self.pos1[0]-self.pos2)**2+(self.pos1[1]-self.pos2[1])))
+        return(math.sqrt((self.pos1[0]-self.pos2[0])**2+(self.pos1[1]-self.pos2[1])))
 
 
     def get_percentage_ratio_of_line(self, pos, axis: Literal["x","y"] = "x"):
