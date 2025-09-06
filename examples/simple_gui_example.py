@@ -33,7 +33,7 @@ gth=pgw.GuiTimeHandler(glc,geh)
 def click_button(pos):
     print("CLICK BUTTON")
     for i,button in enumerate(buttons.elements):
-        if button.is_point_in_rectangle(pos):
+        if button.is_point_inside(pos):
             button.run_function(button.function_args)
     
 
